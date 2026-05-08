@@ -172,6 +172,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.current_file = ""
         self.current_item = None
         self.current_episode = None
+        self.skip_intro_allowed = False
         self.next_episode = None
         self.chapter_starts = []
         self.chapter_percents = []
@@ -297,6 +298,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.current_file = current_file
         self.current_item = item
         self.current_episode = self.get_library_episode(item)
+        self.skip_intro_allowed = self.is_tv_show_playback(item)
         self.next_episode = None
         self.chapter_starts, self.chapter_percents = self.get_chapter_markers()
         self.skip_intro_target = None
@@ -324,10 +326,19 @@ class NextOnLibraryService(xbmc.Monitor):
                 ),
                 xbmc.LOGDEBUG,
             )
-        else:
+        elif self.skip_intro_allowed:
             playback_label = item.get("label") or item.get("title") or current_file
             log(
                 "Tracking playback '%s' for Skip Intro only, chapters=%s" % (
+                    playback_label,
+                    chapter_info,
+                ),
+                xbmc.LOGDEBUG,
+            )
+        else:
+            playback_label = item.get("label") or item.get("title") or current_file
+            log(
+                "Playback '%s' is not an eligible TV show item, chapters=%s" % (
                     playback_label,
                     chapter_info,
                 ),
@@ -385,6 +396,20 @@ class NextOnLibraryService(xbmc.Monitor):
         if tvshow_id in (-1, None):
             return None
         return item
+
+    def is_tv_show_playback(self, item):
+        if not item:
+            return False
+        if item.get("type") == "movie":
+            return False
+        if item.get("type") == "episode":
+            return True
+        tvshow_id = item.get("tvshowid", -1)
+        if tvshow_id not in (-1, None, ""):
+            return True
+        if item.get("showtitle"):
+            return True
+        return self.parse_int(item.get("season")) is not None or self.parse_int(item.get("episode")) is not None
 
     def get_chapter_markers(self):
         starts = self.get_chapter_starts_from_jsonrpc()
@@ -1235,7 +1260,7 @@ class NextOnLibraryService(xbmc.Monitor):
                 ),
                 xbmc.LOGDEBUG,
             )
-        if get_setting_bool("enable_skip_intro"):
+        if self.skip_intro_allowed and get_setting_bool("enable_skip_intro"):
             self.skip_intro_start, self.skip_intro_target = self.calculate_skip_intro_window(total_time)
 
     def calculate_skip_intro_window(self, total_time):
@@ -1317,6 +1342,11 @@ class NextOnLibraryService(xbmc.Monitor):
         return self.get_manual_skip_intro_window(total_time)
 
     def handle_skip_intro(self, current_time, total_time):
+        if not self.skip_intro_allowed:
+            if self.overlay_action == "skip_intro":
+                self.close_overlay()
+            return False
+
         if not get_setting_bool("enable_skip_intro"):
             if self.overlay_action == "skip_intro":
                 self.close_overlay()

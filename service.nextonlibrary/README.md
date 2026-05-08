@@ -1,13 +1,13 @@
 # Skip.Intro.Next (S.I.N.)
 
-`service.nextonlibrary` is a Kodi service add-on that adds two lightweight playback helpers for TV episodes:
+`service.nextonlibrary` is a Kodi service add-on that adds two lightweight playback helpers:
 
 - `Skip Intro`
 - `Next On`
 
-## Current Status
+## Current Behavior
 
-As of `0.0.5`, the add-on can use both local chapter markers and online metadata.
+The add-on can use both local chapter markers and online metadata.
 
 - `Skip Intro` can use:
   - online metadata from `TheIntroDB`
@@ -22,7 +22,7 @@ As of `0.0.5`, the add-on can use both local chapter markers and online metadata
 
 ## What It Does
 
-- Monitors episode playback in Kodi
+- Monitors TV-show playback in Kodi
 - Shows a `Skip Intro` overlay when an intro or recap end can be determined
 - Shows a `Next` overlay near the end of playback
 - Uses simple on-screen overlay buttons instead of a heavy custom interface
@@ -31,15 +31,16 @@ As of `0.0.5`, the add-on can use both local chapter markers and online metadata
 
 ## Playback Scope
 
-- `Next On` is designed for Kodi library episode playback
-- `Skip Intro` also works on non-library playback, including streaming or add-on playback, when Kodi exposes usable chapter markers or the add-on can resolve remote metadata
+- `Skip Intro` works for TV-show playback only. It supports Kodi library episodes and compatible non-library streams or add-on playback when Kodi exposes TV episode metadata.
+- `Skip Intro` does not run for movies.
+- `Next On` works only for Kodi library episodes, because it needs Kodi library data to find and play the next episode.
+- `Next On` does not run for movies, streams, or non-library items.
 
 ## Settings
 
 ### Next On
 
 - `Enable Service`
-- `Prefer Chapter Trigger`
 - `Online Metadata Priority`
 - `Fallback Trigger Percent`
 
@@ -53,7 +54,6 @@ Default behavior:
 - `Enable Skip Intro`
 - `Online Metadata Priority`
 - `Enable Fallback Intro Window`
-- `Intro Max Percent`
 - `Fallback Intro Start`
 - `Fallback Intro End`
 
