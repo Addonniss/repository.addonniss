@@ -1,3 +1,7 @@
+v2.4.16
+- Fixed OpenAI GPT-5 mini translations failing immediately because the API rejects custom temperature values for that model
+- GPT-5 mini now uses OpenAI's accepted default generation settings, with no custom effort or verbosity requested by Translatarr
+
 v2.4.15
 - Added Anthropic Claude as a new AI provider with Claude Haiku 4.5, Claude Sonnet 4.6, and Claude Opus 4.7 model options
 - Expanded Gemini model selection with Gemini 2.5 Pro and Gemini 2.5 Flash-Lite, while keeping Gemini 2.5 Flash as the default and Fast Mode - Gemini 2.5 Flash as a separate UX-oriented option
