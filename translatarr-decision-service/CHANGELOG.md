@@ -15,3 +15,6 @@
 - Documented Radarr/Sonarr webhook setup and added query/header token auth options for easier integration
 - Accepted Radarr/Sonarr test webhook pings without requiring a real media file path
 - Treated path-less Radarr/Sonarr webhook payloads as accepted no-op pings instead of returning `400 BadRequest`
+- Documented `TRANSLATION_PROVIDER` options directly in the Docker Compose example
+- Added Discord notifications for queued, checking, stopped, translating, translated, no-source, and failed decision steps
+- Ported the proven `project.bazaar` translation strategy: prefixed `Lxxx:` lines, exact line-count validation, retry/shrink chunks, `[BR]` line-break preservation, Gemini SDK usage metadata, and LibreTranslate batch-list handling

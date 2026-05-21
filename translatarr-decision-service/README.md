@@ -97,10 +97,15 @@ services:
       TRANSLATION_PROVIDER: "gemini"
       GEMINI_API_KEY: "replace-with-your-key"
       GEMINI_MODEL: "gemini-2.0-flash"
+      GEMINI_TEMPERATURE: "0.15"
+      GEMINI_TOP_P: "0.95"
+      GEMINI_FAST_MODE: "false"
       LIBRETRANSLATE_URL: ""
       LIBRETRANSLATE_API_KEY: ""
       LIBRETRANSLATE_SOURCE: "en"
       LIBRETRANSLATE_TARGET: "ro"
+      DISCORD_WEBHOOK_URL: ""
+      DISCORD_NOTIFY_STEPS: "true"
       MEDIA_PATH_MAPS: >
         [
           {"from": "/path/on/radarr-or-sonarr/media/", "to": "/data/media/"}
@@ -166,6 +171,11 @@ The workflow publishes:
   - default: `gemini-2.0-flash`
 - `GEMINI_TEMPERATURE`
   - default: `0.1`
+- `GEMINI_TOP_P`
+  - default: `0.95`
+- `GEMINI_FAST_MODE`
+  - disables thinking budget for `gemini-2.5-flash`
+  - default: `false`
 - `LIBRETRANSLATE_URL`
   - required when `TRANSLATION_PROVIDER=libretranslate`
   - example: `http://your-libretranslate-host:5000`
@@ -180,6 +190,9 @@ The workflow publishes:
   - default: `60`
 - `DISCORD_WEBHOOK_URL`
   - optional notification webhook
+- `DISCORD_NOTIFY_STEPS`
+  - send Discord notifications for queued, checking, stopped, translating, translated, no-source, and failed decisions
+  - default: `true`
 - `MEDIA_PATH_MAPS`
   - JSON array mapping Radarr/Sonarr paths to paths visible inside this container
 

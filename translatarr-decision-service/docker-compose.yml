@@ -13,14 +13,22 @@ services:
       REMOTE_EXTRACTOR_URL: "http://translatarr-remote-extractor:8097"
       REMOTE_EXTRACTOR_TOKEN: "CHANGE_ME"
       REMOTE_EXTRACTOR_TIMEOUT: "900"
+      # Translation provider options:
+      # - gemini: paid Gemini API, requires GEMINI_API_KEY
+      # - libretranslate: local/private LibreTranslate server, requires LIBRETRANSLATE_URL
+      # - none: dry-run checks only; translation fails intentionally if needed
       TRANSLATION_PROVIDER: "gemini"
       GEMINI_API_KEY: "CHANGE_ME"
       GEMINI_MODEL: "gemini-2.0-flash"
+      GEMINI_TEMPERATURE: "0.15"
+      GEMINI_TOP_P: "0.95"
+      GEMINI_FAST_MODE: "false"
       LIBRETRANSLATE_URL: ""
       LIBRETRANSLATE_API_KEY: ""
       LIBRETRANSLATE_SOURCE: "en"
       LIBRETRANSLATE_TARGET: "ro"
       DISCORD_WEBHOOK_URL: ""
+      DISCORD_NOTIFY_STEPS: "true"
       MEDIA_PATH_MAPS: "[]"
     volumes:
       - /path/to/your/media:/data/media

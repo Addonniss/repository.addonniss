@@ -4,6 +4,7 @@ import json
 import os
 import re
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -11,6 +12,11 @@ from typing import Any, Dict, List, Optional
 import requests
 from fastapi import FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
+
+try:
+    from google import genai
+except ImportError:
+    genai = None
 
 
 app = FastAPI(title="Translatarr Decision Service")
@@ -28,12 +34,20 @@ TRANSLATION_PROVIDER = os.environ.get("TRANSLATION_PROVIDER", "none").strip().lo
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
 GEMINI_TEMPERATURE = float(os.environ.get("GEMINI_TEMPERATURE", "0.1"))
+GEMINI_TOP_P = float(os.environ.get("GEMINI_TOP_P", "0.95"))
+GEMINI_FAST_MODE = os.environ.get("GEMINI_FAST_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
 LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "").strip().rstrip("/")
 LIBRETRANSLATE_API_KEY = os.environ.get("LIBRETRANSLATE_API_KEY", "").strip()
 LIBRETRANSLATE_SOURCE = os.environ.get("LIBRETRANSLATE_SOURCE", "en").strip()
 LIBRETRANSLATE_TARGET = os.environ.get("LIBRETRANSLATE_TARGET", "ro").strip()
 TRANSLATION_BATCH_SIZE = int(os.environ.get("TRANSLATION_BATCH_SIZE", "60"))
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+DISCORD_NOTIFY_STEPS = os.environ.get("DISCORD_NOTIFY_STEPS", "true").strip().lower() in {"1", "true", "yes", "on"}
+
+MODEL_PRICING = {
+    "gemini-2.5-flash": {"input": 0.075, "output": 0.30, "thought": 0.00},
+    "gemini-2.0-flash": {"input": 0.050, "output": 0.20, "thought": 0.00},
+}
 
 TARGET_SIDECAR_TOKENS = {"ro", "ron", "rum", "romanian", "romana"}
 VIDEO_EXTENSIONS = {".mkv", ".mp4", ".m4v"}
@@ -251,7 +265,7 @@ def parse_srt_blocks(content: str) -> List[Dict[str, Any]]:
 def render_srt_blocks(blocks: List[Dict[str, Any]]) -> str:
     rendered = []
     for i, block in enumerate(blocks, start=1):
-        rendered.append(str(i))
+        rendered.append(str(block.get("index") or i))
         rendered.append(block["time"])
         rendered.extend((block.get("text") or "").splitlines() or [""])
         rendered.append("")
@@ -270,98 +284,203 @@ def strip_json_fence(text: str) -> str:
     return value
 
 
-def gemini_translate_batch(items: List[Dict[str, Any]]) -> Dict[int, str]:
+def build_prefixed_lines(text_list: List[str]) -> List[str]:
+    return ["L{0:03}: {1}".format(i, text) for i, text in enumerate(text_list)]
+
+
+def scrub_prefixed_lines(raw_text: str, expected_count: int) -> Optional[List[str]]:
+    if not raw_text:
+        return None
+
+    cleaned = [
+        re.sub(r"^L\d{3}:\s*", "", line.strip())
+        for line in raw_text.strip().split("\n")
+        if re.match(r"^L\d{3}:", line.strip())
+    ]
+
+    if len(cleaned) != expected_count:
+        return None
+
+    return cleaned
+
+
+def is_gemini_fast_mode() -> bool:
+    return TRANSLATION_PROVIDER == "gemini" and GEMINI_MODEL == "gemini-2.5-flash" and GEMINI_FAST_MODE
+
+
+def calculate_translation_cost(input_count: int, output_count: int) -> float:
+    if TRANSLATION_PROVIDER != "gemini":
+        return 0.0
+    pricing = MODEL_PRICING.get(GEMINI_MODEL, {})
+    return (
+        (input_count / 1_000_000) * pricing.get("input", 0.0)
+        + (output_count / 1_000_000) * pricing.get("output", 0.0)
+    )
+
+
+def gemini_translate_lines(text_list: List[str], expected_count: int) -> tuple:
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY is not configured")
+    if genai is None:
+        raise RuntimeError("google-genai is not installed")
 
-    prompt_items = [
-        {"id": item["id"], "text": item["text"].replace("\n", " [BR] ")}
-        for item in items
-    ]
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    prefixed_lines = build_prefixed_lines(text_list)
+    input_text = "\n".join(prefixed_lines)
+
     prompt = (
-        "Translate the subtitle text from {0} to {1}. ".format(SOURCE_LANGUAGE_NAME, TARGET_LANGUAGE_NAME) +
-        "Keep names, formatting tags, punctuation, and meaning. "
-        "Do not add explanations. Preserve [BR] markers. "
-        "Return strict JSON only in this exact shape: "
-        '{"translations":[{"id":0,"text":"translated text"}]}\n\n'
-        "Items:\n{0}".format(json.dumps(prompt_items, ensure_ascii=False))
+        "### ROLE\n"
+        "Professional uncensored English-to-Romanian subtitle localizer.\n\n"
+        "### RULES\n"
+        "1. Translate line-by-line.\n"
+        "2. Preserve 'Lxxx:' prefix.\n"
+        "3. Return exactly {0} lines.\n"
+        "4. Style: Gritty, natural, adult Romanian.\n"
+        "5. Preserve [BR] markers exactly where subtitle line breaks belong.\n"
+        "6. Return ONLY prefixes and translation.".format(expected_count)
     )
 
-    url = "https://generativelanguage.googleapis.com/v1beta/models/{0}:generateContent".format(GEMINI_MODEL)
-    response = requests.post(
-        url,
-        params={"key": GEMINI_API_KEY},
-        json={
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": GEMINI_TEMPERATURE},
-        },
-        timeout=180,
-    )
-    response.raise_for_status()
-    data = response.json()
-    text = data["candidates"][0]["content"]["parts"][0]["text"]
-    parsed = json.loads(strip_json_fence(text))
-    result = {}
-    for item in parsed.get("translations", []):
-        result[int(item["id"])] = str(item.get("text", "")).replace(" [BR] ", "\n").replace("[BR]", "\n")
-    return result
+    attempts = 0
+    while attempts < 3:
+        try:
+            config = {
+                "temperature": GEMINI_TEMPERATURE,
+                "top_p": GEMINI_TOP_P,
+            }
+            if is_gemini_fast_mode():
+                config["thinking_config"] = {"thinking_budget": 0}
+
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=[prompt, input_text],
+                config=config,
+            )
+
+            if not response or not getattr(response, "text", None):
+                attempts += 1
+                time.sleep(2)
+                continue
+
+            translated_lines = scrub_prefixed_lines(response.text, expected_count)
+            if not translated_lines:
+                attempts += 1
+                time.sleep(2)
+                continue
+
+            usage = getattr(response, "usage_metadata", None)
+            thought_tokens = int(getattr(usage, "thoughts_token_count", 0) or 0) if usage else 0
+            input_tokens = int(getattr(usage, "prompt_token_count", 0) or 0) if usage else 0
+            output_tokens = int(getattr(usage, "candidates_token_count", 0) or 0) if usage else 0
+
+            return translated_lines, thought_tokens, input_tokens, output_tokens
+        except Exception:
+            attempts += 1
+            time.sleep(3)
+
+    return None, 0, 0, 0
 
 
-def libretranslate_translate_batch(items: List[Dict[str, Any]]) -> Dict[int, str]:
+def libretranslate_translate_lines(text_list: List[str], expected_count: int) -> tuple:
     if not LIBRETRANSLATE_URL:
         raise RuntimeError("LIBRETRANSLATE_URL is not configured")
 
-    result = {}
-    for item in items:
-        payload = {
-            "q": item["text"],
-            "source": LIBRETRANSLATE_SOURCE,
-            "target": LIBRETRANSLATE_TARGET,
-            "format": "text",
-        }
-        if LIBRETRANSLATE_API_KEY:
-            payload["api_key"] = LIBRETRANSLATE_API_KEY
+    prefixed_lines = build_prefixed_lines(text_list)
+    payload = {
+        "q": prefixed_lines,
+        "source": LIBRETRANSLATE_SOURCE,
+        "target": LIBRETRANSLATE_TARGET,
+        "format": "text",
+    }
+    if LIBRETRANSLATE_API_KEY:
+        payload["api_key"] = LIBRETRANSLATE_API_KEY
 
-        response = requests.post(
-            "{0}/translate".format(LIBRETRANSLATE_URL),
-            json=payload,
-            timeout=180,
-        )
-        response.raise_for_status()
-        data = response.json()
-        result[int(item["id"])] = str(data.get("translatedText", "")).strip()
-    return result
+    attempts = 0
+    while attempts < 3:
+        try:
+            response = requests.post("{0}/translate".format(LIBRETRANSLATE_URL), json=payload, timeout=30)
+            if response.status_code != 200:
+                attempts += 1
+                time.sleep(2)
+                continue
+
+            data = response.json()
+            translated = data.get("translatedText")
+            if isinstance(translated, list):
+                joined = "\n".join(str(item).strip() for item in translated)
+            else:
+                joined = str(translated or "")
+
+            translated_lines = scrub_prefixed_lines(joined, expected_count)
+            if not translated_lines:
+                attempts += 1
+                time.sleep(2)
+                continue
+
+            input_chars = sum(len(item) for item in prefixed_lines)
+            output_chars = sum(len(item) for item in translated_lines)
+            return translated_lines, 0, input_chars, output_chars
+        except Exception:
+            attempts += 1
+            time.sleep(3)
+
+    return None, 0, 0, 0
 
 
-def translate_batch(items: List[Dict[str, Any]]) -> Dict[int, str]:
+def translate_text_only(text_list: List[str], expected_count: int) -> tuple:
     if TRANSLATION_PROVIDER == "gemini":
-        return gemini_translate_batch(items)
+        return gemini_translate_lines(text_list, expected_count)
     if TRANSLATION_PROVIDER == "libretranslate":
-        return libretranslate_translate_batch(items)
+        return libretranslate_translate_lines(text_list, expected_count)
     raise RuntimeError("Unsupported TRANSLATION_PROVIDER: {0}".format(TRANSLATION_PROVIDER))
 
 
-def translate_srt_to_target(content: str) -> str:
+def translate_srt_to_target(content: str) -> Dict[str, Any]:
     if TRANSLATION_PROVIDER == "none":
         raise RuntimeError("TRANSLATION_PROVIDER is set to none")
 
     blocks = parse_srt_blocks(content)
-    translatable = [
-        {"id": i, "text": block["text"]}
-        for i, block in enumerate(blocks)
-        if (block.get("text") or "").strip()
+    texts = [
+        (block.get("text") or "").replace("\n", " [BR] ")
+        for block in blocks
     ]
 
-    translations: Dict[int, str] = {}
-    for start in range(0, len(translatable), TRANSLATION_BATCH_SIZE):
-        batch = translatable[start:start + TRANSLATION_BATCH_SIZE]
-        translations.update(translate_batch(batch))
+    all_translated = []
+    cum_thought = 0
+    cum_in = 0
+    cum_out = 0
+    idx = 0
+
+    while idx < len(texts):
+        success = False
+        for size in [TRANSLATION_BATCH_SIZE, 50, 25]:
+            chunk = texts[idx:idx + min(size, len(texts) - idx)]
+            translated, thought, input_count, output_count = translate_text_only(chunk, len(chunk))
+            if translated:
+                all_translated.extend(translated)
+                cum_thought += thought or 0
+                cum_in += input_count or 0
+                cum_out += output_count or 0
+                idx += len(chunk)
+                success = True
+                time.sleep(1)
+                break
+        if not success:
+            raise RuntimeError("Translation failed after retries")
 
     for i, block in enumerate(blocks):
-        if i in translations and translations[i].strip():
-            block["text"] = translations[i].strip()
+        txt = all_translated[i] if i < len(all_translated) else ""
+        scrubbed = re.sub(r"^[ \t]*L\d{1,4}[:\-\s\.]*", "", txt, flags=re.IGNORECASE).strip()
+        final_txt = re.sub(r"\s*\[BR\]\s*", "\n", scrubbed, flags=re.IGNORECASE).strip()
+        block["text"] = final_txt
 
-    return render_srt_blocks(blocks)
+    return {
+        "content": render_srt_blocks(blocks),
+        "lines": len(all_translated),
+        "thought_count": cum_thought,
+        "input_count": cum_in,
+        "output_count": cum_out,
+        "cost": calculate_translation_cost(cum_in, cum_out),
+    }
 
 
 def write_sidecar(media_path: Path, content: str) -> Path:
@@ -383,7 +502,7 @@ def write_sidecar(media_path: Path, content: str) -> Path:
 
 
 def notify_discord(title: str, lines: List[str]) -> None:
-    if not DISCORD_WEBHOOK_URL:
+    if not DISCORD_WEBHOOK_URL or not DISCORD_NOTIFY_STEPS:
         return
     try:
         requests.post(
@@ -395,60 +514,119 @@ def notify_discord(title: str, lines: List[str]) -> None:
         pass
 
 
+def notify_job(job_id: str, title: str, lines: List[str]) -> None:
+    job = JOBS.get(job_id, {})
+    prefix = [
+        "Source: {0}".format(job.get("source", "unknown")),
+        "Event: {0}".format(job.get("event_type", "") or "unknown"),
+        "Media: {0}".format(Path(job.get("media_path", "")).name or job.get("media_path", "")),
+    ]
+    notify_discord(title, prefix + lines)
+
+
 async def run_decision_job(job_id: str) -> None:
     job = JOBS[job_id]
     update_job(job_id, "waiting", "Waiting {0}s before checks".format(DELAY_SECONDS))
+    notify_job(job_id, "Translatarr Decision: queued", [
+        "Waiting: {0}s before checks".format(DELAY_SECONDS),
+    ])
     await asyncio.sleep(DELAY_SECONDS)
 
     try:
         update_job(job_id, "running", "Starting delayed decision checks")
+        notify_job(job_id, "Translatarr Decision: checking", [
+            "Starting delayed Romanian subtitle checks",
+        ])
         mapped_media = apply_path_maps(job["media_path"])
         media_path = Path(mapped_media)
         update_job(job_id, "running", "Mapped media path", mapped_media_path=str(media_path))
 
         if media_path.suffix.lower() not in VIDEO_EXTENSIONS:
             update_job(job_id, "skipped", "Unsupported media extension: {0}".format(media_path.suffix))
+            notify_job(job_id, "Translatarr Decision: skipped", [
+                "Unsupported media extension: {0}".format(media_path.suffix),
+            ])
             return
         if not media_path.exists():
             update_job(job_id, "failed", "Media file does not exist inside container: {0}".format(media_path))
+            notify_job(job_id, "Translatarr Decision: failed", [
+                "Media file does not exist inside container",
+                "Path: {0}".format(media_path),
+            ])
             return
 
         sidecars = find_target_sidecars(media_path)
         if sidecars:
             update_job(job_id, "completed", "Romanian sidecar already exists", sidecars=sidecars)
+            notify_job(job_id, "Translatarr Decision: stopped", [
+                "Romanian sidecar already exists",
+                "Subtitle: {0}".format(Path(sidecars[0]).name),
+            ])
             return
 
         probe = await asyncio.to_thread(probe_embedded_target, str(media_path))
         if probe.get("ok") and probe.get("found"):
             update_job(job_id, "completed", "Embedded Romanian subtitle exists; no extraction or translation needed", probe=probe)
+            selected = probe.get("selected_track") or {}
+            notify_job(job_id, "Translatarr Decision: stopped", [
+                "Embedded Romanian subtitle exists",
+                "Action: no extraction, no translation",
+                "Track: {0}".format(selected.get("name") or selected.get("language") or "matched"),
+            ])
             return
 
         extract = await asyncio.to_thread(extract_embedded_source, str(media_path))
         if not extract.get("ok"):
             update_job(job_id, "completed", "No usable embedded English source subtitle found", extractor=extract)
+            notify_job(job_id, "Translatarr Decision: no source", [
+                "No usable embedded English source subtitle found",
+                "Extractor: {0}".format(extract.get("message", "no message")),
+            ])
             return
 
         source_srt = extract.get("extracted_srt_content") or ""
         if not source_srt.strip():
             update_job(job_id, "failed", "Extractor returned no subtitle content", extractor=extract)
+            notify_job(job_id, "Translatarr Decision: failed", [
+                "Extractor returned no subtitle content",
+            ])
             return
 
         sidecars = find_target_sidecars(media_path)
         if sidecars:
             update_job(job_id, "completed", "Romanian sidecar appeared after extraction", sidecars=sidecars)
+            notify_job(job_id, "Translatarr Decision: stopped", [
+                "Romanian sidecar appeared after extraction",
+                "Subtitle: {0}".format(Path(sidecars[0]).name),
+            ])
             return
 
-        translated = await asyncio.to_thread(translate_srt_to_target, source_srt)
-        saved_path = write_sidecar(media_path, translated)
+        notify_job(job_id, "Translatarr Decision: translating", [
+            "Provider: {0}".format(TRANSLATION_PROVIDER),
+            "Source: embedded {0}".format(SOURCE_LANGUAGE_NAME),
+            "Target suffix: .{0}.srt".format(TARGET_LANGUAGE_SUFFIX),
+        ])
+        translation = await asyncio.to_thread(translate_srt_to_target, source_srt)
+        saved_path = write_sidecar(media_path, translation["content"])
         update_job(job_id, "completed", "Translated Romanian sidecar saved", saved_path=str(saved_path))
-        notify_discord("Translatarr Decision Service", [
-            "Translated: {0}".format(media_path.name),
+        notify_job(job_id, "Translatarr Decision: translated", [
+            "Provider: {0}".format(TRANSLATION_PROVIDER),
             "Target: {0}".format(saved_path.name),
+            "Lines: {0}".format(translation["lines"]),
+            "Input: {0}".format(translation["input_count"]),
+            "Output: {0}".format(translation["output_count"]),
+            "Cost: ${0:.4f}".format(translation["cost"]),
         ])
     except FileExistsError as exc:
         update_job(job_id, "completed", str(exc))
+        notify_job(job_id, "Translatarr Decision: stopped", [
+            str(exc),
+        ])
     except Exception as exc:
         update_job(job_id, "failed", "{0}: {1}".format(type(exc).__name__, exc))
+        notify_job(job_id, "Translatarr Decision: failed", [
+            "{0}: {1}".format(type(exc).__name__, exc),
+        ])
 
 
 def queue_job(source: str, payload: Dict[str, Any]) -> TriggerResponse:
