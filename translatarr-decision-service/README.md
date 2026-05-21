@@ -96,7 +96,6 @@ services:
       REMOTE_EXTRACTOR_TIMEOUT: "900"
       TRANSLATION_PROVIDER: "gemini"
       TRANSLATION_STYLE: "Gritty / Adult"
-      TRANSLATION_LOCALIZATION_ENABLED: "true"
       GEMINI_API_KEY: "replace-with-your-key"
       GEMINI_MODEL: "gemini-2.0-flash"
       GEMINI_TEMPERATURE: "0.15"
@@ -171,9 +170,6 @@ The workflow publishes:
   - Gemini prompt style: `Family-Friendly`, `Natural`, or `Gritty / Adult`
   - default: `Gritty / Adult`
   - LibreTranslate does not support prompt-level style control
-- `TRANSLATION_LOCALIZATION_ENABLED`
-  - adds localization guidance for idioms and grammatical gender in Gemini prompts
-  - default: `true`
 - `GEMINI_API_KEY`
   - required when `TRANSLATION_PROVIDER=gemini`
 - `GEMINI_MODEL`

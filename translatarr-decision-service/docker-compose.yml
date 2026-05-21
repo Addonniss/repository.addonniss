@@ -24,7 +24,6 @@ services:
       # - Gritty / Adult: raw adult tone, preserves profanity and insults
       # LibreTranslate does not support prompt-level style control.
       TRANSLATION_STYLE: "Gritty / Adult"
-      TRANSLATION_LOCALIZATION_ENABLED: "true"
       GEMINI_API_KEY: "CHANGE_ME"
       GEMINI_MODEL: "gemini-2.0-flash"
       GEMINI_TEMPERATURE: "0.15"

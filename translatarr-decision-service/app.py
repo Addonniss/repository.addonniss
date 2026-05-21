@@ -32,7 +32,6 @@ REMOTE_EXTRACTOR_TOKEN = os.environ.get("REMOTE_EXTRACTOR_TOKEN", "").strip()
 REMOTE_EXTRACTOR_TIMEOUT = int(os.environ.get("REMOTE_EXTRACTOR_TIMEOUT", "900"))
 TRANSLATION_PROVIDER = os.environ.get("TRANSLATION_PROVIDER", "none").strip().lower()
 TRANSLATION_STYLE = os.environ.get("TRANSLATION_STYLE", "Gritty / Adult").strip()
-TRANSLATION_LOCALIZATION_ENABLED = os.environ.get("TRANSLATION_LOCALIZATION_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
 GEMINI_TEMPERATURE = float(os.environ.get("GEMINI_TEMPERATURE", "0.1"))
@@ -361,8 +360,6 @@ def build_style_instruction(trg_name: str) -> str:
 
 
 def build_localization_instruction() -> str:
-    if not TRANSLATION_LOCALIZATION_ENABLED:
-        return ""
     return (
         "LOCALIZATION REQUIREMENT:\n"
         "- Translate idiomatic expressions by meaning rather than word-for-word when needed.\n"
@@ -753,7 +750,6 @@ def health() -> Dict[str, Any]:
         "remote_extractor_configured": bool(REMOTE_EXTRACTOR_URL),
         "translation_provider": TRANSLATION_PROVIDER,
         "translation_style": normalize_translation_style(TRANSLATION_STYLE),
-        "translation_localization_enabled": TRANSLATION_LOCALIZATION_ENABLED,
     }
 
 
