@@ -455,7 +455,8 @@ def queue_job(source: str, payload: Dict[str, Any]) -> TriggerResponse:
     media_path = extract_media_path(payload, source)
     event_type = first_payload_value(payload, ["eventType", "event_type", "radarr_eventtype", "sonarr_eventtype"])
     if not media_path:
-        if event_type.lower() == "test":
+        payload_text = json.dumps(payload, ensure_ascii=False).lower()
+        if event_type.lower() == "test" or "test" in payload_text:
             return TriggerResponse(
                 ok=True,
                 job_id="test",
@@ -463,7 +464,13 @@ def queue_job(source: str, payload: Dict[str, Any]) -> TriggerResponse:
                 media_path="",
                 message="{0} test webhook accepted".format(source.capitalize()),
             )
-        raise HTTPException(status_code=400, detail="Could not find media path in payload")
+        return TriggerResponse(
+            ok=True,
+            job_id="ignored-no-media-path",
+            status="ignored",
+            media_path="",
+            message="{0} webhook accepted but ignored because no media file path was present".format(source.capitalize()),
+        )
 
     normalized_media = media_path.strip()
     job_id = make_job_id(normalized_media)

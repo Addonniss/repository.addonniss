@@ -14,3 +14,4 @@
 - Added GitHub Actions publishing workflow for `ghcr.io/addonniss/translatarr-decision-service`
 - Documented Radarr/Sonarr webhook setup and added query/header token auth options for easier integration
 - Accepted Radarr/Sonarr test webhook pings without requiring a real media file path
+- Treated path-less Radarr/Sonarr webhook payloads as accepted no-op pings instead of returning `400 BadRequest`

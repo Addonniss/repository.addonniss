@@ -57,6 +57,8 @@ http://your-decision-service-host:8098/radarr?token=YOUR_TOKEN
 
 `/radarr` and `/sonarr` accept normal JSON webhook payloads. They also accept simple custom-script style keys such as:
 
+Radarr/Sonarr Test buttons may send a payload without a real media file path. The service accepts those pings and returns success without queueing a translation job.
+
 ```json
 {
   "eventType": "Download",
