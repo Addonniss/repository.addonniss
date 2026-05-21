@@ -18,3 +18,5 @@
 - Documented `TRANSLATION_PROVIDER` options directly in the Docker Compose example
 - Added Discord notifications for queued, checking, stopped, translating, translated, no-source, and failed decision steps
 - Ported the proven `project.bazaar` translation strategy: prefixed `Lxxx:` lines, exact line-count validation, retry/shrink chunks, `[BR]` line-break preservation, Gemini SDK usage metadata, and LibreTranslate batch-list handling
+- Documented `GEMINI_FAST_MODE=false` meaning directly in the Docker Compose example
+- Added `TRANSLATION_STYLE` and `TRANSLATION_LOCALIZATION_ENABLED` environment options for Gemini prompt control, aligned with `service.translatarr` style modes

@@ -18,10 +18,19 @@ services:
       # - libretranslate: local/private LibreTranslate server, requires LIBRETRANSLATE_URL
       # - none: dry-run checks only; translation fails intentionally if needed
       TRANSLATION_PROVIDER: "gemini"
+      # Translation style options for Gemini prompts:
+      # - Family-Friendly: clean, neutral, avoids profanity
+      # - Natural: conversational, realistic, avoids literal phrasing
+      # - Gritty / Adult: raw adult tone, preserves profanity and insults
+      # LibreTranslate does not support prompt-level style control.
+      TRANSLATION_STYLE: "Gritty / Adult"
+      TRANSLATION_LOCALIZATION_ENABLED: "true"
       GEMINI_API_KEY: "CHANGE_ME"
       GEMINI_MODEL: "gemini-2.0-flash"
       GEMINI_TEMPERATURE: "0.15"
       GEMINI_TOP_P: "0.95"
+      # GEMINI_FAST_MODE only applies to gemini-2.5-flash.
+      # false = normal model behavior; true = request thinking_budget 0 for faster/cheaper 2.5 Flash calls.
       GEMINI_FAST_MODE: "false"
       LIBRETRANSLATE_URL: ""
       LIBRETRANSLATE_API_KEY: ""

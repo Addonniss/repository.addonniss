@@ -31,6 +31,8 @@ REMOTE_EXTRACTOR_URL = os.environ.get("REMOTE_EXTRACTOR_URL", "").strip().rstrip
 REMOTE_EXTRACTOR_TOKEN = os.environ.get("REMOTE_EXTRACTOR_TOKEN", "").strip()
 REMOTE_EXTRACTOR_TIMEOUT = int(os.environ.get("REMOTE_EXTRACTOR_TIMEOUT", "900"))
 TRANSLATION_PROVIDER = os.environ.get("TRANSLATION_PROVIDER", "none").strip().lower()
+TRANSLATION_STYLE = os.environ.get("TRANSLATION_STYLE", "Gritty / Adult").strip()
+TRANSLATION_LOCALIZATION_ENABLED = os.environ.get("TRANSLATION_LOCALIZATION_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
 GEMINI_TEMPERATURE = float(os.environ.get("GEMINI_TEMPERATURE", "0.1"))
@@ -318,6 +320,56 @@ def calculate_translation_cost(input_count: int, output_count: int) -> float:
     )
 
 
+def normalize_translation_style(value: str) -> str:
+    normalized = (value or "").strip().lower()
+    if normalized in {"2", "gritty", "adult", "gritty / adult", "gritty/adult", "gritty-adult"}:
+        return "Gritty / Adult"
+    if normalized in {"1", "natural"}:
+        return "Natural"
+    if normalized in {"0", "family", "family-friendly", "family friendly", "clean"}:
+        return "Family-Friendly"
+    return "Gritty / Adult"
+
+
+def build_style_instruction(trg_name: str) -> str:
+    style_mode = normalize_translation_style(TRANSLATION_STYLE)
+
+    if style_mode == "Gritty / Adult":
+        return (
+            "STYLE REQUIREMENT:\n"
+            "- Tone: gritty, raw, adult {0}.\n"
+            "- Preserve profanity and strong language.\n"
+            "- Do NOT soften insults.\n"
+            "- Maintain emotional intensity.\n"
+        ).format(trg_name)
+
+    if style_mode == "Natural":
+        return (
+            "STYLE REQUIREMENT:\n"
+            "- Tone: natural conversational {0}.\n"
+            "- Sound realistic and fluid.\n"
+            "- Avoid overly literal translation.\n"
+        ).format(trg_name)
+
+    return (
+        "STYLE REQUIREMENT:\n"
+        "- Tone: clean, neutral, broadcast-safe {0}.\n"
+        "- Avoid profanity.\n"
+        "- Replace strong insults with mild alternatives.\n"
+        "- Keep dialogue suitable for general audiences.\n"
+    ).format(trg_name)
+
+
+def build_localization_instruction() -> str:
+    if not TRANSLATION_LOCALIZATION_ENABLED:
+        return ""
+    return (
+        "LOCALIZATION REQUIREMENT:\n"
+        "- Translate idiomatic expressions by meaning rather than word-for-word when needed.\n"
+        "- Use context to choose grammatical gender correctly when the target language requires it.\n"
+    )
+
+
 def gemini_translate_lines(text_list: List[str], expected_count: int) -> tuple:
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY is not configured")
@@ -330,14 +382,21 @@ def gemini_translate_lines(text_list: List[str], expected_count: int) -> tuple:
 
     prompt = (
         "### ROLE\n"
-        "Professional uncensored English-to-Romanian subtitle localizer.\n\n"
+        "Professional {0}-to-{1} subtitle localizer.\n\n"
+        "{2}\n"
+        "{3}\n"
         "### RULES\n"
         "1. Translate line-by-line.\n"
         "2. Preserve 'Lxxx:' prefix.\n"
-        "3. Return exactly {0} lines.\n"
-        "4. Style: Gritty, natural, adult Romanian.\n"
-        "5. Preserve [BR] markers exactly where subtitle line breaks belong.\n"
-        "6. Return ONLY prefixes and translation.".format(expected_count)
+        "3. Return exactly {4} lines.\n"
+        "4. Preserve [BR] markers exactly where subtitle line breaks belong.\n"
+        "5. Return ONLY prefixes and translation."
+    ).format(
+        SOURCE_LANGUAGE_NAME,
+        TARGET_LANGUAGE_NAME,
+        build_style_instruction(TARGET_LANGUAGE_NAME),
+        build_localization_instruction(),
+        expected_count,
     )
 
     attempts = 0
@@ -603,6 +662,7 @@ async def run_decision_job(job_id: str) -> None:
 
         notify_job(job_id, "Translatarr Decision: translating", [
             "Provider: {0}".format(TRANSLATION_PROVIDER),
+            "Style: {0}".format(normalize_translation_style(TRANSLATION_STYLE)),
             "Source: embedded {0}".format(SOURCE_LANGUAGE_NAME),
             "Target suffix: .{0}.srt".format(TARGET_LANGUAGE_SUFFIX),
         ])
@@ -692,6 +752,8 @@ def health() -> Dict[str, Any]:
         "delay_seconds": DELAY_SECONDS,
         "remote_extractor_configured": bool(REMOTE_EXTRACTOR_URL),
         "translation_provider": TRANSLATION_PROVIDER,
+        "translation_style": normalize_translation_style(TRANSLATION_STYLE),
+        "translation_localization_enabled": TRANSLATION_LOCALIZATION_ENABLED,
     }
 
 
