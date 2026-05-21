@@ -266,6 +266,9 @@ class OpenAITranslator(BaseTranslator):
 
         self.model = model_map.get(ADDON.getSetting('openai_model'), "gpt-4o-mini")
 
+    def _supports_custom_temperature(self):
+        return not self.model.startswith("gpt-5")
+
     def translate_batch(self, text_list, expected_count):
 
         if not self.api_key:
@@ -306,9 +309,10 @@ class OpenAITranslator(BaseTranslator):
                     )
                 },
                 {"role": "user", "content": input_text}
-            ],
-            "temperature": self.temperature
+            ]
         }
+        if self._supports_custom_temperature():
+            payload["temperature"] = self.temperature
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
