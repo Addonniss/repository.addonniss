@@ -453,7 +453,16 @@ async def run_decision_job(job_id: str) -> None:
 
 def queue_job(source: str, payload: Dict[str, Any]) -> TriggerResponse:
     media_path = extract_media_path(payload, source)
+    event_type = first_payload_value(payload, ["eventType", "event_type", "radarr_eventtype", "sonarr_eventtype"])
     if not media_path:
+        if event_type.lower() == "test":
+            return TriggerResponse(
+                ok=True,
+                job_id="test",
+                status="accepted",
+                media_path="",
+                message="{0} test webhook accepted".format(source.capitalize()),
+            )
         raise HTTPException(status_code=400, detail="Could not find media path in payload")
 
     normalized_media = media_path.strip()
@@ -469,7 +478,6 @@ def queue_job(source: str, payload: Dict[str, Any]) -> TriggerResponse:
             message="Duplicate active job already exists",
         )
 
-    event_type = first_payload_value(payload, ["eventType", "event_type", "radarr_eventtype", "sonarr_eventtype"])
     JOBS[job_id] = {
         "id": job_id,
         "source": source,
