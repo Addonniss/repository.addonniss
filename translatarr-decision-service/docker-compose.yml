@@ -10,6 +10,7 @@ services:
       DECISION_TARGET_LANGUAGE_NAME: "Romanian"
       DECISION_TARGET_LANGUAGE_SUFFIX: "ro"
       DECISION_SOURCE_LANGUAGE_NAME: "English"
+      DECISION_SOURCE_LANGUAGE_SUFFIX: "en"
       REMOTE_EXTRACTOR_URL: "http://translatarr-remote-extractor:8097"
       REMOTE_EXTRACTOR_TOKEN: "CHANGE_ME"
       REMOTE_EXTRACTOR_TIMEOUT: "900"
@@ -35,6 +36,9 @@ services:
       LIBRETRANSLATE_API_KEY: ""
       LIBRETRANSLATE_SOURCE: "en"
       LIBRETRANSLATE_TARGET: "ro"
+      # Save extracted embedded English next to the movie before translation.
+      # Useful for audit/debug/retry. Set false if you only want the Romanian output.
+      SAVE_SOURCE_SUBTITLE: "true"
       DISCORD_WEBHOOK_URL: ""
       DISCORD_NOTIFY_STEPS: "true"
       MEDIA_PATH_MAPS: "[]"

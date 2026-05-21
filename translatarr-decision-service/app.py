@@ -27,6 +27,7 @@ DELAY_SECONDS = int(os.environ.get("DECISION_DELAY_SECONDS", "600"))
 TARGET_LANGUAGE_NAME = os.environ.get("DECISION_TARGET_LANGUAGE_NAME", "Romanian").strip()
 TARGET_LANGUAGE_SUFFIX = os.environ.get("DECISION_TARGET_LANGUAGE_SUFFIX", "ro").strip()
 SOURCE_LANGUAGE_NAME = os.environ.get("DECISION_SOURCE_LANGUAGE_NAME", "English").strip()
+SOURCE_LANGUAGE_SUFFIX = os.environ.get("DECISION_SOURCE_LANGUAGE_SUFFIX", "en").strip()
 REMOTE_EXTRACTOR_URL = os.environ.get("REMOTE_EXTRACTOR_URL", "").strip().rstrip("/")
 REMOTE_EXTRACTOR_TOKEN = os.environ.get("REMOTE_EXTRACTOR_TOKEN", "").strip()
 REMOTE_EXTRACTOR_TIMEOUT = int(os.environ.get("REMOTE_EXTRACTOR_TIMEOUT", "900"))
@@ -42,6 +43,7 @@ LIBRETRANSLATE_API_KEY = os.environ.get("LIBRETRANSLATE_API_KEY", "").strip()
 LIBRETRANSLATE_SOURCE = os.environ.get("LIBRETRANSLATE_SOURCE", "en").strip()
 LIBRETRANSLATE_TARGET = os.environ.get("LIBRETRANSLATE_TARGET", "ro").strip()
 TRANSLATION_BATCH_SIZE = int(os.environ.get("TRANSLATION_BATCH_SIZE", "60"))
+SAVE_SOURCE_SUBTITLE = os.environ.get("SAVE_SOURCE_SUBTITLE", "true").strip().lower() in {"1", "true", "yes", "on"}
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
 DISCORD_NOTIFY_STEPS = os.environ.get("DISCORD_NOTIFY_STEPS", "true").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -557,6 +559,23 @@ def write_sidecar(media_path: Path, content: str) -> Path:
     return target
 
 
+def write_language_sidecar(media_path: Path, language_suffix: str, content: str, overwrite: bool = False) -> Path:
+    target = media_path.with_suffix(".{0}.srt".format(language_suffix))
+    if target.exists() and not overwrite:
+        return target
+
+    fd, temp_name = tempfile.mkstemp(prefix=target.name + ".", suffix=".tmp", dir=str(target.parent))
+    temp_path = Path(temp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+        os.replace(str(temp_path), str(target))
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+    return target
+
+
 def notify_discord(title: str, lines: List[str]) -> None:
     if not DISCORD_WEBHOOK_URL or not DISCORD_NOTIFY_STEPS:
         return
@@ -620,6 +639,10 @@ async def run_decision_job(job_id: str) -> None:
             ])
             return
 
+        notify_job(job_id, "Translatarr Decision: probing", [
+            "No Romanian sidecar found",
+            "Checking embedded {0}".format(TARGET_LANGUAGE_NAME),
+        ])
         probe = await asyncio.to_thread(probe_embedded_target, str(media_path))
         if probe.get("ok") and probe.get("found"):
             update_job(job_id, "completed", "Embedded Romanian subtitle exists; no extraction or translation needed", probe=probe)
@@ -631,6 +654,10 @@ async def run_decision_job(job_id: str) -> None:
             ])
             return
 
+        notify_job(job_id, "Translatarr Decision: extracting", [
+            "No Romanian sidecar or embedded Romanian subtitle found",
+            "Extracting embedded {0}".format(SOURCE_LANGUAGE_NAME),
+        ])
         extract = await asyncio.to_thread(extract_embedded_source, str(media_path))
         if not extract.get("ok"):
             update_job(job_id, "completed", "No usable embedded English source subtitle found", extractor=extract)
@@ -648,6 +675,21 @@ async def run_decision_job(job_id: str) -> None:
             ])
             return
 
+        source_saved_path = None
+        if SAVE_SOURCE_SUBTITLE:
+            source_saved_path = write_language_sidecar(media_path, SOURCE_LANGUAGE_SUFFIX, source_srt)
+            update_job(job_id, "running", "Embedded source subtitle extracted", source_saved_path=str(source_saved_path))
+            notify_job(job_id, "Translatarr Decision: extracted", [
+                "Embedded {0} subtitle extracted".format(SOURCE_LANGUAGE_NAME),
+                "Source subtitle: {0}".format(source_saved_path.name),
+            ])
+        else:
+            update_job(job_id, "running", "Embedded source subtitle extracted")
+            notify_job(job_id, "Translatarr Decision: extracted", [
+                "Embedded {0} subtitle extracted".format(SOURCE_LANGUAGE_NAME),
+                "Source subtitle save: disabled",
+            ])
+
         sidecars = find_target_sidecars(media_path)
         if sidecars:
             update_job(job_id, "completed", "Romanian sidecar appeared after extraction", sidecars=sidecars)
@@ -660,7 +702,7 @@ async def run_decision_job(job_id: str) -> None:
         notify_job(job_id, "Translatarr Decision: translating", [
             "Provider: {0}".format(TRANSLATION_PROVIDER),
             "Style: {0}".format(normalize_translation_style(TRANSLATION_STYLE)),
-            "Source: embedded {0}".format(SOURCE_LANGUAGE_NAME),
+            "Source: {0}".format(source_saved_path.name if source_saved_path else "embedded {0}".format(SOURCE_LANGUAGE_NAME)),
             "Target suffix: .{0}.srt".format(TARGET_LANGUAGE_SUFFIX),
         ])
         translation = await asyncio.to_thread(translate_srt_to_target, source_srt)
@@ -750,6 +792,7 @@ def health() -> Dict[str, Any]:
         "remote_extractor_configured": bool(REMOTE_EXTRACTOR_URL),
         "translation_provider": TRANSLATION_PROVIDER,
         "translation_style": normalize_translation_style(TRANSLATION_STYLE),
+        "save_source_subtitle": SAVE_SOURCE_SUBTITLE,
     }
 
 

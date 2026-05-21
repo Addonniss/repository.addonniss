@@ -21,3 +21,5 @@
 - Documented `GEMINI_FAST_MODE=false` meaning directly in the Docker Compose example
 - Added `TRANSLATION_STYLE` for Gemini prompt control, aligned with `service.translatarr` style modes
 - Kept localization guidance always enabled for Gemini prompts, matching `service.translatarr`
+- Added Discord notifications for embedded target probing, embedded source extraction start, and source extraction completion
+- Added `SAVE_SOURCE_SUBTITLE` and `DECISION_SOURCE_LANGUAGE_SUFFIX` so extracted embedded source subtitles can be saved next to media before translation
