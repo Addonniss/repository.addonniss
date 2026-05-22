@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import tempfile
 import time
 from datetime import datetime, timezone
@@ -44,6 +45,7 @@ LIBRETRANSLATE_SOURCE = os.environ.get("LIBRETRANSLATE_SOURCE", "en").strip()
 LIBRETRANSLATE_TARGET = os.environ.get("LIBRETRANSLATE_TARGET", "ro").strip()
 TRANSLATION_BATCH_SIZE = int(os.environ.get("TRANSLATION_BATCH_SIZE", "60"))
 SAVE_SOURCE_SUBTITLE = os.environ.get("SAVE_SOURCE_SUBTITLE", "true").strip().lower() in {"1", "true", "yes", "on"}
+PROTECT_SAVED_SUBTITLES = os.environ.get("PROTECT_SAVED_SUBTITLES", "true").strip().lower() in {"1", "true", "yes", "on"}
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
 DISCORD_NOTIFY_STEPS = os.environ.get("DISCORD_NOTIFY_STEPS", "true").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -321,6 +323,14 @@ def calculate_translation_cost(input_count: int, output_count: int) -> float:
     )
 
 
+def get_billing_label() -> str:
+    if TRANSLATION_PROVIDER == "libretranslate":
+        return "LibreTranslate"
+    if is_gemini_fast_mode():
+        return "{0}-fast".format(GEMINI_MODEL)
+    return GEMINI_MODEL
+
+
 def normalize_translation_style(value: str) -> str:
     normalized = (value or "").strip().lower()
     if normalized in {"2", "gritty", "adult", "gritty / adult", "gritty/adult", "gritty-adult"}:
@@ -541,22 +551,58 @@ def translate_srt_to_target(content: str) -> Dict[str, Any]:
     }
 
 
+def format_translation_stat_lines(translation: Dict[str, Any]) -> List[str]:
+    if TRANSLATION_PROVIDER == "libretranslate":
+        return [
+            "Provider: {0}".format(get_billing_label()),
+            "Input Chars: {0:,}".format(translation["input_count"]),
+            "Output Chars: {0:,}".format(translation["output_count"]),
+            "Cost: ${0:.4f}".format(translation["cost"]),
+        ]
+
+    return [
+        "Model: {0}".format(get_billing_label()),
+        "Input Tokens: {0:,}".format(translation["input_count"]),
+        "Output Tokens: {0:,}".format(translation["output_count"]),
+        "Thought: {0:,}".format(translation["thought_count"]),
+        "Cost: ${0:.4f}".format(translation["cost"]),
+    ]
+
+
+def write_atomic_verified(path: Path, content: str, protect: bool = True) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temp_name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(path.parent))
+    temp_path = Path(temp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(str(temp_path), str(path))
+
+        with open(path, "rb") as handle:
+            os.fsync(handle.fileno())
+
+        if protect and PROTECT_SAVED_SUBTITLES:
+            read_only_mode = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+            os.chmod(path, read_only_mode)
+
+        if not path.exists() or path.stat().st_size <= 0:
+            raise OSError("subtitle save verification failed: {0}".format(path))
+
+        return path
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+
+
 def write_sidecar(media_path: Path, content: str) -> Path:
     target = media_path.with_suffix(".{0}.srt".format(TARGET_LANGUAGE_SUFFIX))
     existing = find_target_sidecars(media_path)
     if existing:
         raise FileExistsError("Romanian sidecar appeared before save: {0}".format(existing[0]))
 
-    fd, temp_name = tempfile.mkstemp(prefix=target.name + ".", suffix=".tmp", dir=str(target.parent))
-    temp_path = Path(temp_name)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(content)
-        os.replace(str(temp_path), str(target))
-    finally:
-        if temp_path.exists():
-            temp_path.unlink()
-    return target
+    return write_atomic_verified(target, content, protect=True)
 
 
 def write_language_sidecar(media_path: Path, language_suffix: str, content: str, overwrite: bool = False) -> Path:
@@ -564,39 +610,87 @@ def write_language_sidecar(media_path: Path, language_suffix: str, content: str,
     if target.exists() and not overwrite:
         return target
 
-    fd, temp_name = tempfile.mkstemp(prefix=target.name + ".", suffix=".tmp", dir=str(target.parent))
-    temp_path = Path(temp_name)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(content)
-        os.replace(str(temp_path), str(target))
-    finally:
-        if temp_path.exists():
-            temp_path.unlink()
-    return target
+    return write_atomic_verified(target, content, protect=False)
 
 
-def notify_discord(title: str, lines: List[str]) -> None:
+def format_discord_description(lines: List[str]) -> str:
+    code_labels = {
+        "media",
+        "source",
+        "target",
+        "subtitle",
+        "source subtitle",
+        "path",
+        "origin",
+        "event",
+        "provider",
+        "model",
+        "input tokens",
+        "output tokens",
+        "input chars",
+        "output chars",
+        "thought",
+        "cost",
+        "style",
+        "target suffix",
+    }
+    formatted = []
+    for line in lines:
+        if not line:
+            formatted.append("")
+            continue
+        if line.startswith("- "):
+            formatted.append(line)
+            continue
+        if ": " in line:
+            label, value = line.split(": ", 1)
+            if label.lower() in code_labels:
+                formatted.append("**{0}:** `{1}`".format(label, value))
+            else:
+                formatted.append("**{0}:** {1}".format(label, value))
+            continue
+        formatted.append(line)
+    return "\n".join(formatted)
+
+
+def discord_color_for_title(title: str) -> int:
+    lowered = title.lower()
+    if "failed" in lowered or "skipped" in lowered or "no source" in lowered:
+        return 15158332
+    if "extracting" in lowered or "checking" in lowered or "probing" in lowered or "translating" in lowered:
+        return 3447003
+    return 3066993
+
+
+def notify_discord(title: str, lines: List[str], footer: str = "Decision Engine") -> None:
     if not DISCORD_WEBHOOK_URL or not DISCORD_NOTIFY_STEPS:
         return
     try:
         requests.post(
             DISCORD_WEBHOOK_URL,
-            json={"content": "**{0}**\n{1}".format(title, "\n".join(lines))},
+            json={
+                "username": "Translatarr",
+                "embeds": [{
+                    "title": title,
+                    "description": format_discord_description(lines),
+                    "color": discord_color_for_title(title),
+                    "footer": {"text": footer},
+                }],
+            },
             timeout=15,
         )
     except Exception:
         pass
 
 
-def notify_job(job_id: str, title: str, lines: List[str]) -> None:
+def notify_job(job_id: str, title: str, lines: List[str], footer: str = "Decision Engine") -> None:
     job = JOBS.get(job_id, {})
     prefix = [
-        "Source: {0}".format(job.get("source", "unknown")),
+        "Origin: {0}".format(job.get("source", "unknown")),
         "Event: {0}".format(job.get("event_type", "") or "unknown"),
         "Media: {0}".format(Path(job.get("media_path", "")).name or job.get("media_path", "")),
     ]
-    notify_discord(title, prefix + lines)
+    notify_discord(title, prefix + lines, footer=footer)
 
 
 async def run_decision_job(job_id: str) -> None:
@@ -709,13 +803,11 @@ async def run_decision_job(job_id: str) -> None:
         saved_path = write_sidecar(media_path, translation["content"])
         update_job(job_id, "completed", "Translated Romanian sidecar saved", saved_path=str(saved_path))
         notify_job(job_id, "Translatarr Decision: translated", [
-            "Provider: {0}".format(TRANSLATION_PROVIDER),
+            "Source: {0}".format(source_saved_path.name if source_saved_path else "embedded {0}".format(SOURCE_LANGUAGE_NAME)),
             "Target: {0}".format(saved_path.name),
             "Lines: {0}".format(translation["lines"]),
-            "Input: {0}".format(translation["input_count"]),
-            "Output: {0}".format(translation["output_count"]),
-            "Cost: ${0:.4f}".format(translation["cost"]),
-        ])
+            "",
+        ] + format_translation_stat_lines(translation), footer="Verified Save - Protected Mode")
     except FileExistsError as exc:
         update_job(job_id, "completed", str(exc))
         notify_job(job_id, "Translatarr Decision: stopped", [
@@ -793,6 +885,7 @@ def health() -> Dict[str, Any]:
         "translation_provider": TRANSLATION_PROVIDER,
         "translation_style": normalize_translation_style(TRANSLATION_STYLE),
         "save_source_subtitle": SAVE_SOURCE_SUBTITLE,
+        "protect_saved_subtitles": PROTECT_SAVED_SUBTITLES,
     }
 
 

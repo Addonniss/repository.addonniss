@@ -146,6 +146,8 @@ services:
       # Save extracted embedded English next to the movie before translation.
       # Useful for audit/debug/retry. Set false if you only want the Romanian output.
       SAVE_SOURCE_SUBTITLE: "true"
+      # Applies to generated target subtitles. Uses atomic write + fsync + read-only chmod.
+      PROTECT_SAVED_SUBTITLES: "true"
       DISCORD_WEBHOOK_URL: ""
       DISCORD_NOTIFY_STEPS: "true"
 
@@ -226,10 +228,14 @@ docker compose up -d --build
 - `SAVE_SOURCE_SUBTITLE`
   - save extracted embedded source subtitles next to the media before translation
   - default: `true`
+- `PROTECT_SAVED_SUBTITLES`
+  - applies to generated target subtitles
+  - writes atomically, fsyncs, verifies the saved file, then chmods read-only
+  - default: `true`
 - `DISCORD_WEBHOOK_URL`
   - optional notification webhook
 - `DISCORD_NOTIFY_STEPS`
-  - send Discord notifications for queued, checking, stopped, translating, translated, no-source, skipped, and failed decisions
+  - send Discord embed notifications for queued, checking, stopped, translating, translated, no-source, skipped, and failed decisions
   - default: `true`
 - `MEDIA_PATH_MAPS`
   - JSON array mapping Radarr/Sonarr paths to paths visible inside this container
@@ -349,6 +355,8 @@ Discord step notifications can include:
 - stopped
 - no source
 - failed
+
+Discord messages use embed formatting similar to `project.bazaar`, with bold labels, inline-code values, and color status. General decision-step embeds use a `Decision Engine` footer. Translation-complete embeds use `Verified Save - Protected Mode` only after the target subtitle has been written atomically, fsynced, verified, and protected. Translation-complete embeds include model/provider, input tokens or chars, output tokens or chars, thought tokens for Gemini, and estimated cost.
 
 ## Image Publishing
 

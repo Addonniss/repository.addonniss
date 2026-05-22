@@ -23,3 +23,7 @@
 - Kept localization guidance always enabled for Gemini prompts, matching `service.translatarr`
 - Added Discord notifications for embedded target probing, embedded source extraction start, and source extraction completion
 - Added `SAVE_SOURCE_SUBTITLE` and `DECISION_SOURCE_LANGUAGE_SUFFIX` so extracted embedded source subtitles can be saved next to media before translation
+- Added `TRANSLATION_BATCH_SIZE: "100"` to the Docker Compose example to match the tested Portainer stack
+- Switched Discord notifications from plain text to embed formatting similar to `project.bazaar`
+- Included Gemini thought-token usage in translated Discord summaries
+- Made the `Verified Save - Protected Mode` Discord footer reflect real save logic: atomic write, fsync, file verification, and optional read-only chmod through `PROTECT_SAVED_SUBTITLES`

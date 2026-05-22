@@ -36,9 +36,12 @@ services:
       LIBRETRANSLATE_API_KEY: ""
       LIBRETRANSLATE_SOURCE: "en"
       LIBRETRANSLATE_TARGET: "ro"
+      TRANSLATION_BATCH_SIZE: "100"
       # Save extracted embedded English next to the movie before translation.
       # Useful for audit/debug/retry. Set false if you only want the Romanian output.
       SAVE_SOURCE_SUBTITLE: "true"
+      # Applies to generated target subtitles. Uses atomic write + fsync + read-only chmod.
+      PROTECT_SAVED_SUBTITLES: "true"
       DISCORD_WEBHOOK_URL: ""
       DISCORD_NOTIFY_STEPS: "true"
       MEDIA_PATH_MAPS: "[]"
