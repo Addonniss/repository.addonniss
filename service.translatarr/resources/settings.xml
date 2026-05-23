@@ -8,6 +8,24 @@
                     <control type="toggle" />
                     <default>true</default>
                 </setting>
+                <setting id="require_translation_confirmation" type="boolean" label="30091" help="30092">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+                <setting id="translation_confirmation_delay" type="integer" label="30094" help="30095">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>0</minimum>
+                        <step>1</step>
+                        <maximum>60</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>2</default>
+                    <dependencies>
+                        <dependency type="visible" setting="require_translation_confirmation">true</dependency>
+                    </dependencies>
+                </setting>
                 <setting id="translation_mode" type="string" label="30039" help="30040">
                     <level>0</level>
                     <constraints>

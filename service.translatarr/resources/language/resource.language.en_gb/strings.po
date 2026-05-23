@@ -161,6 +161,26 @@ msgctxt "#30090"
 msgid "Select the specific Claude model version."
 msgstr ""
 
+msgctxt "#30091"
+msgid "Require translation confirmation (ALPHA)"
+msgstr ""
+
+msgctxt "#30092"
+msgid "When enabled, Translatarr waits for you to approve translation of a newly detected source subtitle during playback. The confirmation button takes focus: pressing select starts translation, while back, navigation, seeking, or other playback actions can dismiss it for the current subtitle."
+msgstr ""
+
+msgctxt "#30093"
+msgid "Translate Subtitle"
+msgstr ""
+
+msgctxt "#30094"
+msgid "Translation confirmation delay"
+msgstr ""
+
+msgctxt "#30095"
+msgid "Seconds to wait after loading a source subtitle before showing the confirmation button. Increase this if you need more time to close Kodi subtitle windows or check subtitle sync before the button takes focus."
+msgstr ""
+
 msgctxt "#30038"
 msgid "Manual Mode (Advanced)"
 msgstr ""
