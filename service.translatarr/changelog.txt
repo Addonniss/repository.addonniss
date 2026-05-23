@@ -1,3 +1,7 @@
+v2.4.17
+- Added Gemini 3.5 Flash, Gemini 3.1 Flash-Lite, and Fast Mode - Gemini 3.1 Flash-Lite to the Gemini model selection
+- Refined the Kodi settings layout so Embedded Subtitles now sits between Translation and Advanced, and Dual-Language Display now appears after SDH/HI cue removal in the Translation group
+
 v2.4.16
 - Fixed OpenAI GPT-5 mini translations failing immediately because the API rejects custom temperature values for that model
 - GPT-5 mini now uses OpenAI's accepted default generation settings, with no custom effort or verbosity requested by Translatarr

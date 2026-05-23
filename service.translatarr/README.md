@@ -23,7 +23,13 @@ Main capabilities:
 - optional embedded subtitle extraction from MKV and MP4 files
 - optional remote embedded-subtitle extraction through the companion [Translatarr Remote Extractor](https://github.com/addonniss/repository.addonniss/blob/main/translatarr-remote-extractor/README.md)
 
-## Basic Setup
+## What's New in v2.4.17
+
+- Added new Gemini model choices:
+  - `Gemini 3.5 Flash`
+  - `Gemini 3.1 Flash-Lite`
+  - `Fast Mode - Gemini 3.1 Flash-Lite`
+- Refined the Kodi settings flow so categories now read more naturally
 
 Open:
 
@@ -65,16 +71,22 @@ Use Manual if you want predictable folder-based behavior or if your subtitle add
 
 Requires a Gemini API key. Model selection is available in settings, including:
 
+- Gemini 3.5 Flash
+- Gemini 3.1 Flash-Lite
+- Fast Mode - Gemini 3.1 Flash-Lite
 - Gemini 2.5 Pro
 - Gemini 2.5 Flash
 - Fast Mode - Gemini 2.5 Flash
 - Gemini 2.5 Flash-Lite
 - legacy Gemini 2.0 / 1.5 Flash options for compatibility
 
-Gemini 2.5 Flash remains the default. Flash-Lite is the budget / high-throughput option. Fast Mode keeps the normal Gemini 2.5 Flash model but reduces thinking for a different speed / UX tradeoff.
+Gemini 2.5 Flash remains the default. Flash-Lite is the budget / high-throughput option. Fast Mode keeps the normal model family but reduces thinking for a different speed / UX tradeoff.
 
 Recommended usage:
 
+- `Gemini 3.5 Flash`: best when you want a newer stable Gemini option with strong quality while still staying in the Flash family.
+- `Gemini 3.1 Flash-Lite`: best when you want an even cheaper high-throughput Gemini option for fast subtitle jobs.
+- `Fast Mode - Gemini 3.1 Flash-Lite`: use when you want the lowest-overhead Gemini Lite path and you are happy to trade some thinking depth for speed during playback.
 - `Gemini 2.5 Pro`: best when subtitle nuance matters most and you want the strongest overall quality, even if it is slower or more expensive.
 - `Gemini 2.5 Flash`: the best default balance for most users. Good quality, good speed, and suitable for normal day-to-day subtitle translation.
 - `Fast Mode - Gemini 2.5 Flash`: use when you want the same Flash family but with a speed-first feel and less thinking overhead during playback.
