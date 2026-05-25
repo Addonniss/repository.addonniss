@@ -1,3 +1,9 @@
+1.0.3
+- Added optional auto-play for the next library episode, with configurable 0-20 second delay and a pill progress overlay that follows the existing dismiss behavior
+- Added optional auto-skip for intros, with configurable 0-10 second delay defaulting to 2 seconds
+- Added a draining pill outline to the Skip Intro prompt so its timeout is visible
+- Kept the existing manual Next On and Skip Intro prompt behavior as the default
+
 1.0.2
 - Limited Skip Intro to TV-show playback only, including compatible non-library streams and add-on playback when Kodi exposes TV episode metadata
 - Kept Next On restricted to Kodi library episodes and clarified the documented playback scope

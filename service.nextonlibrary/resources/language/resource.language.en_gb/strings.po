@@ -73,10 +73,6 @@ msgctxt "#30017"
 msgid "Skip Intro"
 msgstr ""
 
-msgctxt "#30018"
-msgid "Close"
-msgstr ""
-
 msgctxt "#30019"
 msgid "Fallback Intro Start"
 msgstr ""
@@ -127,4 +123,36 @@ msgstr ""
 
 msgctxt "#30031"
 msgid "Open the add-on changelog in a text viewer."
+msgstr ""
+
+msgctxt "#30032"
+msgid "Auto-play Next Episode"
+msgstr ""
+
+msgctxt "#30033"
+msgid "Automatically opens the next library episode after the Next On prompt appears. Select still plays immediately, and other remote or keyboard actions cancel the prompt."
+msgstr ""
+
+msgctxt "#30034"
+msgid "Auto-play Delay"
+msgstr ""
+
+msgctxt "#30035"
+msgid "Seconds to wait before auto-playing the next episode. Use 0 to play instantly. Maximum: 20."
+msgstr ""
+
+msgctxt "#30036"
+msgid "Auto-skip Intro"
+msgstr ""
+
+msgctxt "#30037"
+msgid "Automatically skips to the intro end after the Skip Intro prompt appears. Select still skips immediately, and other remote or keyboard actions cancel the prompt."
+msgstr ""
+
+msgctxt "#30038"
+msgid "Auto-skip Delay"
+msgstr ""
+
+msgctxt "#30039"
+msgid "Seconds to wait before auto-skipping the intro. Use 0 to skip instantly. Maximum: 10."
 msgstr ""

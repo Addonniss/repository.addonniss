@@ -30,25 +30,13 @@
                 <alttexturenofocus border="30" colordiffuse="FFFFFFFF">button.png</alttexturenofocus>
                 <pulseonselect>no</pulseonselect>
             </control>
-            <control type="button" id="3013">
-                <left>1660</left>
+            <control type="image" id="3014">
+                <left>1560</left>
                 <top>760</top>
-                <width>170</width>
+                <width>280</width>
                 <height>72</height>
-                <label>$ADDON[service.nextonlibrary 30018]</label>
-                <font>font20_title</font>
-                <textcolor>FF111111</textcolor>
-                <focusedcolor>FF111111</focusedcolor>
-                <selectedcolor>FF111111</selectedcolor>
-                <shadowcolor>00000000</shadowcolor>
-                <align>center</align>
-                <aligny>center</aligny>
                 <visible>false</visible>
-                <texturefocus border="30" colordiffuse="CCFFFFFF">button.png</texturefocus>
-                <texturenofocus border="30" colordiffuse="CCFFFFFF">button.png</texturenofocus>
-                <alttexturefocus border="30" colordiffuse="CCFFFFFF">button.png</alttexturefocus>
-                <alttexturenofocus border="30" colordiffuse="CCFFFFFF">button.png</alttexturenofocus>
-                <pulseonselect>no</pulseonselect>
+                <texture>autoplay-progress/autoplay-progress-00.png</texture>
             </control>
         </control>
     </controls>
