@@ -1,3 +1,7 @@
+1.0.4
+- Reworked the overlay countdown animation into a smooth contour around the Skip Intro and Next On buttons
+- Added an Advanced setting to choose the global contour color: blue, green, purple, orange, pink, or red
+
 1.0.3
 - Added optional auto-play for the next library episode, with configurable 0-20 second delay and a pill progress overlay that follows the existing dismiss behavior
 - Added optional auto-skip for intros, with configurable 0-10 second delay defaulting to 2 seconds

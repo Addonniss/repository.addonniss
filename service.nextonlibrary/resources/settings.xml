@@ -114,6 +114,7 @@
                     <control type="edit" format="integer" />
                     <default>90</default>
                 </setting>
+
             </group>
         </category>
 
@@ -123,6 +124,22 @@
                     <level>0</level>
                     <control type="toggle" />
                     <default>false</default>
+                </setting>
+
+                <setting id="contour_color" type="string" label="30040" help="30041">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="30042">blue</option>
+                            <option label="30043">green</option>
+                            <option label="30044">purple</option>
+                            <option label="30045">orange</option>
+                            <option label="30046">pink</option>
+                            <option label="30047">red</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>blue</default>
                 </setting>
 
                 <setting id="show_changelog" type="action" label="30030" help="30031">

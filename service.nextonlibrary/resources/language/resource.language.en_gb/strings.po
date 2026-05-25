@@ -156,3 +156,35 @@ msgstr ""
 msgctxt "#30039"
 msgid "Seconds to wait before auto-skipping the intro. Use 0 to skip instantly. Maximum: 10."
 msgstr ""
+
+msgctxt "#30040"
+msgid "Contour Color"
+msgstr ""
+
+msgctxt "#30041"
+msgid "Choose the color used by the countdown contour around the overlay button."
+msgstr ""
+
+msgctxt "#30042"
+msgid "Blue"
+msgstr ""
+
+msgctxt "#30043"
+msgid "Green"
+msgstr ""
+
+msgctxt "#30044"
+msgid "Purple"
+msgstr ""
+
+msgctxt "#30045"
+msgid "Orange"
+msgstr ""
+
+msgctxt "#30046"
+msgid "Pink"
+msgstr ""
+
+msgctxt "#30047"
+msgid "Red"
+msgstr ""

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 import re
 from contextlib import closing
 from platform import machine
+from time import monotonic
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -16,7 +16,6 @@ ADDON_ID = "service.nextonlibrary"
 ADDON = xbmcaddon.Addon(ADDON_ID)
 ADDON_PATH = ADDON.getAddonInfo("path")
 BUTTON_CONTROL_ID = 3012
-PROGRESS_CONTROL_ID = 3014
 ACTION_SELECT_ITEM = 7
 ACTION_PLAYER_STOP = 13
 ACTION_NAV_BACK = 92
@@ -28,7 +27,17 @@ OS_MACHINE = machine()
 THEINTRODB_BASE_URL = "https://api.theintrodb.org/v2/media"
 INTRODB_SEGMENTS_URL = "http://api.introdb.app/segments"
 REMOTE_LOOKUP_TIMEOUT = 5
-AUTO_PLAY_PROGRESS_FRAME_COUNT = 41
+AUTO_PLAY_PROGRESS_FRAME_COUNT = 91
+IDLE_POLL_INTERVAL = 1.0
+ANIMATION_POLL_INTERVAL = 0.1
+CONTOUR_COLOR_FOLDERS = {
+    "blue": "progress-button-blue",
+    "green": "progress-button-green",
+    "purple": "progress-button-purple",
+    "orange": "progress-button-orange",
+    "pink": "progress-button-pink",
+    "red": "progress-button-red",
+}
 
 
 def localize(string_id):
@@ -180,6 +189,8 @@ class NextOnLibraryService(xbmc.Monitor):
         self.skip_intro_remote_attempted = False
         self.skip_intro_prompted = False
         self.skip_intro_overlay_shown_at = None
+        self.skip_intro_overlay_wall_shown_at = None
+        self.skip_intro_overlay_visual_duration = 10.0
         self.auto_skip_intro_active = False
         self.auto_skip_intro_started_at = None
         self.auto_skip_intro_delay = 0
@@ -209,6 +220,7 @@ class NextOnLibraryService(xbmc.Monitor):
         if not self.overlay:
             self.overlay_action = None
             self.skip_intro_overlay_shown_at = None
+            self.skip_intro_overlay_wall_shown_at = None
             return
         try:
             self.overlay.close()
@@ -217,6 +229,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.overlay = None
         self.overlay_action = None
         self.skip_intro_overlay_shown_at = None
+        self.skip_intro_overlay_wall_shown_at = None
         self.cancel_auto_skip_intro(log_message=False)
         self.overlay_progress_frame_index = None
 
@@ -228,7 +241,7 @@ class NextOnLibraryService(xbmc.Monitor):
         log("Service started", force=True)
 
         while not self.abortRequested():
-            if self.waitForAbort(1):
+            if self.waitForAbort(self.get_poll_interval()):
                 break
 
             if not get_setting_bool("service_enabled"):
@@ -285,6 +298,13 @@ class NextOnLibraryService(xbmc.Monitor):
             self.prompt_for_next_episode()
 
         log("Service stopped", force=True)
+
+    def get_poll_interval(self):
+        if self.overlay_action in ("skip_intro", "next_episode") and self.overlay:
+            return ANIMATION_POLL_INTERVAL
+        if self.auto_skip_intro_active or self.auto_play_active:
+            return ANIMATION_POLL_INTERVAL
+        return IDLE_POLL_INTERVAL
 
     def bootstrap_session(self):
         if not get_setting_bool("service_enabled"):
@@ -1409,7 +1429,11 @@ class NextOnLibraryService(xbmc.Monitor):
             self.handle_auto_skip_intro(current_time)
             return True
 
-        if self.skip_intro_overlay_shown_at is not None and (current_time - self.skip_intro_overlay_shown_at) >= 10.0:
+        wall_elapsed = None
+        if self.skip_intro_overlay_wall_shown_at is not None:
+            wall_elapsed = monotonic() - self.skip_intro_overlay_wall_shown_at
+
+        if self.skip_intro_overlay_shown_at is not None and wall_elapsed is not None and wall_elapsed >= 10.0:
             if self.overlay_action == "skip_intro":
                 log(
                     "Closing Skip Intro overlay after timeout (current=%.2f, shown_at=%.2f)" % (
@@ -1424,13 +1448,10 @@ class NextOnLibraryService(xbmc.Monitor):
             return False
 
         if self.overlay_action == "skip_intro" and self.skip_intro_overlay_shown_at is not None:
-            hide_progress = 0.0
-            if hide_threshold > self.skip_intro_overlay_shown_at:
-                hide_progress = (
-                    current_time - self.skip_intro_overlay_shown_at
-                ) / (hide_threshold - self.skip_intro_overlay_shown_at)
-            timeout_progress = (current_time - self.skip_intro_overlay_shown_at) / 10.0
-            self.update_overlay_progress(1.0 - max(hide_progress, timeout_progress))
+            if wall_elapsed is None:
+                wall_elapsed = 0.0
+            visual_duration = max(0.25, float(self.skip_intro_overlay_visual_duration or 10.0))
+            self.update_overlay_progress(1.0 - min(1.0, wall_elapsed / visual_duration))
             return True
 
         if self.skip_intro_prompted:
@@ -1455,6 +1476,8 @@ class NextOnLibraryService(xbmc.Monitor):
             self.start_auto_skip_intro_countdown(auto_skip_delay)
         self.show_overlay("skip_intro")
         self.skip_intro_overlay_shown_at = current_time
+        self.skip_intro_overlay_wall_shown_at = monotonic()
+        self.skip_intro_overlay_visual_duration = max(0.25, min(10.0, hide_threshold - current_time))
         self.skip_intro_prompted = True
         if auto_skip_enabled:
             self.update_overlay_progress(0.0)
@@ -1469,13 +1492,8 @@ class NextOnLibraryService(xbmc.Monitor):
         return True
 
     def start_auto_skip_intro_countdown(self, delay):
-        try:
-            current_time = self.player.getTime()
-        except RuntimeError:
-            current_time = 0.0
-
         self.auto_skip_intro_active = True
-        self.auto_skip_intro_started_at = current_time
+        self.auto_skip_intro_started_at = monotonic()
         self.auto_skip_intro_delay = delay
         self.auto_skip_intro_session_file = self.current_file
         self.auto_skip_intro_target = self.skip_intro_target
@@ -1514,8 +1532,8 @@ class NextOnLibraryService(xbmc.Monitor):
         delay = max(1, int(self.auto_skip_intro_delay or 1))
         started_at = self.auto_skip_intro_started_at
         if started_at is None:
-            started_at = current_time
-        elapsed = max(0.0, current_time - float(started_at))
+            started_at = monotonic()
+        elapsed = max(0.0, monotonic() - float(started_at))
         progress = min(1.0, elapsed / float(delay))
         self.update_overlay_progress(progress)
 
@@ -1579,7 +1597,9 @@ class NextOnLibraryService(xbmc.Monitor):
             log("No next library episode found", xbmc.LOGDEBUG)
             return
 
-        if get_setting_bool("auto_play_next_episode"):
+        auto_play_enabled = get_setting_bool("auto_play_next_episode")
+        log("Next On auto-play setting -> %s" % auto_play_enabled, xbmc.LOGDEBUG)
+        if auto_play_enabled:
             delay = get_setting_int("auto_play_delay", default=10, minimum=0, maximum=20)
             if delay <= 0:
                 log(
@@ -1607,16 +1627,19 @@ class NextOnLibraryService(xbmc.Monitor):
         log("Displayed Next overlay for episode %s" % episode.get("episodeid"), xbmc.LOGDEBUG)
 
     def start_auto_play_countdown(self, episode, delay, update_progress=True):
-        try:
-            current_time = self.player.getTime()
-        except RuntimeError:
-            current_time = 0.0
-
         self.auto_play_active = True
-        self.auto_play_started_at = current_time
+        self.auto_play_started_at = monotonic()
         self.auto_play_delay = delay
         self.auto_play_session_file = self.current_file
         self.auto_play_episode_id = episode.get("episodeid")
+        log(
+            "Auto-play Next Episode countdown started: delay=%s episode=%s started_at=%.2f" % (
+                delay,
+                self.auto_play_episode_id,
+                self.auto_play_started_at,
+            ),
+            xbmc.LOGDEBUG,
+        )
         if update_progress:
             self.update_auto_play_progress(0.0)
 
@@ -1656,8 +1679,8 @@ class NextOnLibraryService(xbmc.Monitor):
         delay = max(1, int(self.auto_play_delay or 1))
         started_at = self.auto_play_started_at
         if started_at is None:
-            started_at = current_time
-        elapsed = max(0.0, current_time - float(started_at))
+            started_at = monotonic()
+        elapsed = max(0.0, monotonic() - float(started_at))
         progress = min(1.0, elapsed / float(delay))
         self.update_overlay_progress(progress)
 
@@ -1668,42 +1691,27 @@ class NextOnLibraryService(xbmc.Monitor):
 
         return True
 
-    def get_overlay_progress_path(self, frame_index):
-        filename = "autoplay-progress-%02d.png" % frame_index
-        return os.path.join(
-            ADDON_PATH,
-            "resources",
-            "skins",
-            "default",
-            "media",
-            "autoplay-progress",
-            filename,
-        )
-
     def update_auto_play_progress(self, progress, visible=True):
         self.update_overlay_progress(progress, visible=visible)
+
+    def get_contour_frame_path(self, frame_index):
+        color = get_setting_string("contour_color", "blue").lower()
+        folder = CONTOUR_COLOR_FOLDERS.get(color, CONTOUR_COLOR_FOLDERS["blue"])
+        return "%s/progress-button-%03d.png" % (folder, frame_index)
 
     def update_overlay_progress(self, progress, visible=True):
         if not self.overlay:
             return
 
-        try:
-            progress_control = self.overlay.getControl(PROGRESS_CONTROL_ID)
-        except RuntimeError:
-            return
-
-        progress_control.setVisible(bool(visible))
         if not visible:
-            return
+            progress = 0.0
 
         frame_index = int(round(max(0.0, min(1.0, progress)) * (AUTO_PLAY_PROGRESS_FRAME_COUNT - 1)))
         if frame_index == self.overlay_progress_frame_index:
             return
         self.overlay_progress_frame_index = frame_index
-        try:
-            progress_control.setImage(self.get_overlay_progress_path(frame_index), False)
-        except TypeError:
-            progress_control.setImage(self.get_overlay_progress_path(frame_index))
+        self.overlay.setProperty("progress_frame_path", self.get_contour_frame_path(frame_index))
+        log("Overlay progress frame set to %03d" % frame_index, xbmc.LOGDEBUG)
 
     def show_overlay(self, action_name):
         if self.overlay:
@@ -1731,21 +1739,26 @@ class NextOnLibraryService(xbmc.Monitor):
         )
 
     def configure_overlay_controls(self, overlay):
-        try:
-            progress_control = overlay.getControl(PROGRESS_CONTROL_ID)
-        except RuntimeError:
-            return
-
         show_progress = (
             (self.overlay_action == "next_episode" and self.auto_play_active)
             or self.overlay_action == "skip_intro"
         )
-        progress_control.setVisible(show_progress)
+        log(
+            "Overlay progress visibility -> action=%s auto_play=%s auto_skip=%s show=%s" % (
+                self.overlay_action,
+                self.auto_play_active,
+                self.auto_skip_intro_active,
+                show_progress,
+            ),
+            xbmc.LOGDEBUG,
+        )
         if show_progress:
             if self.overlay_action == "skip_intro" and not self.auto_skip_intro_active:
                 self.update_overlay_progress(1.0)
             else:
                 self.update_overlay_progress(0.0)
+        else:
+            self.update_overlay_progress(0.0)
 
     def get_overlay_label(self):
         if self.overlay_action == "skip_intro":
@@ -1759,6 +1772,11 @@ class NextOnLibraryService(xbmc.Monitor):
         if self.overlay_action == "skip_intro":
             self.seek_skip_intro()
             return
+        if self.auto_play_active:
+            started_at = self.auto_play_started_at
+            if started_at is not None and (monotonic() - float(started_at)) < 0.75:
+                log("Ignoring immediate Next overlay activation during auto-play debounce", xbmc.LOGDEBUG)
+                return
         self.play_next_episode()
 
     def dismiss_overlay(self, user_initiated=True):
