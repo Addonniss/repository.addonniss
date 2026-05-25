@@ -22,9 +22,14 @@ ADDON = xbmcaddon.Addon(ADDON_ID)
 ADDON_PATH = ADDON.getAddonInfo('path')
 
 CONFIRM_TRANSLATION_BUTTON_CONTROL_ID = 3012
+CONTINUE_TRANSLATION_BUTTON_CONTROL_ID = 3013
+SKIP_TRANSLATION_BUTTON_CONTROL_ID = 3015
 CONFIRM_TRANSLATION_OVERLAY_XML = "script-translatarr-confirmation-overlay.xml"
 DEFAULT_CONFIRM_TRANSLATION_DELAY_SECONDS = 2
 MAX_CONFIRM_TRANSLATION_DELAY_SECONDS = 60
+DEFAULT_CONFIRM_TRANSLATION_REMINDER_SECONDS = 60
+MIN_CONFIRM_TRANSLATION_REMINDER_SECONDS = 2
+MAX_CONFIRM_TRANSLATION_REMINDER_SECONDS = 120
 ACTION_SELECT_ITEM = 7
 ACTION_PLAYER_STOP = 13
 ACTION_NAV_BACK = 92
@@ -541,16 +546,27 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
 
     def onInit(self):  # pylint: disable=invalid-name
         try:
-            button = self.getControl(CONFIRM_TRANSLATION_BUTTON_CONTROL_ID)
             if self.service:
-                button.setLabel(self.service.get_confirmation_overlay_label())
-            self.setFocusId(CONFIRM_TRANSLATION_BUTTON_CONTROL_ID)
+                self.getControl(CONFIRM_TRANSLATION_BUTTON_CONTROL_ID).setLabel(
+                    self.service.get_confirmation_overlay_label("translate")
+                )
+                self.getControl(CONTINUE_TRANSLATION_BUTTON_CONTROL_ID).setLabel(
+                    self.service.get_confirmation_overlay_label("continue")
+                )
+                self.getControl(SKIP_TRANSLATION_BUTTON_CONTROL_ID).setLabel(
+                    self.service.get_confirmation_overlay_label("skip")
+                )
+            self.setFocusId(CONTINUE_TRANSLATION_BUTTON_CONTROL_ID)
         except RuntimeError:
             pass
 
     def onClick(self, control_id):  # pylint: disable=invalid-name
         if control_id == CONFIRM_TRANSLATION_BUTTON_CONTROL_ID and self.service:
             self.service.approve_translation_confirmation()
+        elif control_id == CONTINUE_TRANSLATION_BUTTON_CONTROL_ID and self.service:
+            self.service.continue_translation_confirmation()
+        elif control_id == SKIP_TRANSLATION_BUTTON_CONTROL_ID and self.service:
+            self.service.skip_translation_confirmation()
 
     def onAction(self, action):  # pylint: disable=invalid-name
         action_id = action.getId()
@@ -558,6 +574,12 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
             focused_id = self.getFocusId()
             if focused_id == CONFIRM_TRANSLATION_BUTTON_CONTROL_ID:
                 self.service.approve_translation_confirmation()
+                return
+            if focused_id == CONTINUE_TRANSLATION_BUTTON_CONTROL_ID:
+                self.service.continue_translation_confirmation()
+                return
+            if focused_id == SKIP_TRANSLATION_BUTTON_CONTROL_ID:
+                self.service.skip_translation_confirmation()
                 return
         elif action_id in (
             ACTION_MOUSE_MOVE,
@@ -568,8 +590,10 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
             return
 
         if self.service:
-            user_initiated = action_id != ACTION_PLAYER_STOP
-            self.service.dismiss_translation_confirmation(user_initiated=user_initiated)
+            if action_id == ACTION_PLAYER_STOP:
+                self.service.close_translation_confirmation_overlay()
+            else:
+                self.service.continue_translation_confirmation(user_initiated=True)
         else:
             self.close()
 
@@ -615,8 +639,21 @@ class TranslatarrMonitor(xbmc.Monitor):
             log(f"Failed to load subtitle: {e}", "error", self)
             return False
 
-    def get_confirmation_overlay_label(self):
-        return ADDON.getLocalizedString(30093) or "Translate Subtitle"
+    def get_confirmation_overlay_label(self, action="translate"):
+        if action == "continue":
+            reminder_seconds = getattr(
+                self,
+                "translation_confirmation_reminder_delay",
+                DEFAULT_CONFIRM_TRANSLATION_REMINDER_SECONDS
+            )
+            label_template = ADDON.getLocalizedString(30096) or "Remind in {0}s"
+            try:
+                return label_template.format(reminder_seconds)
+            except Exception:
+                return "Remind in {0}s".format(reminder_seconds)
+        if action == "skip":
+            return ADDON.getLocalizedString(30098) or "Skip"
+        return ADDON.getLocalizedString(30093) or "Translate"
 
     def close_translation_confirmation_overlay(self):
         overlay = getattr(self, "translation_confirmation_overlay", None)
@@ -711,14 +748,34 @@ class TranslatarrMonitor(xbmc.Monitor):
         )
         self.close_translation_confirmation_overlay()
 
-    def dismiss_translation_confirmation(self, user_initiated=True):
+    def continue_translation_confirmation(self, user_initiated=True):
+        candidate = getattr(self, "pending_translation_candidate", None)
+        if candidate:
+            reminder_seconds = getattr(
+                self,
+                "translation_confirmation_reminder_delay",
+                DEFAULT_CONFIRM_TRANSLATION_REMINDER_SECONDS
+            )
+            self.translation_confirmation_eligible_at = time.time() + reminder_seconds
+            log(
+                "Continued watching with translation confirmation pending for candidate: {0} | reminder={1}s | user_initiated={2}".format(
+                    candidate.get("path"),
+                    reminder_seconds,
+                    user_initiated
+                ),
+                "debug",
+                self
+            )
+        self.close_translation_confirmation_overlay()
+
+    def skip_translation_confirmation(self, user_initiated=True):
         candidate = getattr(self, "pending_translation_candidate", None)
         if candidate:
             self.dismissed_translation_candidate_keys.add(candidate.get("key"))
             if self.approved_translation_candidate_key == candidate.get("key"):
                 self.approved_translation_candidate_key = None
             log(
-                "Dismissed translation confirmation for candidate: {0} | user_initiated={1}".format(
+                "Skipped translation confirmation for candidate: {0} | user_initiated={1}".format(
                     candidate.get("path"),
                     user_initiated
                 ),
@@ -726,6 +783,9 @@ class TranslatarrMonitor(xbmc.Monitor):
                 self
             )
         self.close_translation_confirmation_overlay()
+
+    def dismiss_translation_confirmation(self, user_initiated=True):
+        self.continue_translation_confirmation(user_initiated=user_initiated)
 
     def build_translation_candidate(self, source_path, source_mtime, source_size, force_retranslate=False, save_path=None, show_source_immediately=True):
         return {
@@ -996,6 +1056,13 @@ class TranslatarrMonitor(xbmc.Monitor):
                 safe_int('translation_confirmation_delay', DEFAULT_CONFIRM_TRANSLATION_DELAY_SECONDS)
             )
         )
+        self.translation_confirmation_reminder_delay = max(
+            MIN_CONFIRM_TRANSLATION_REMINDER_SECONDS,
+            min(
+                MAX_CONFIRM_TRANSLATION_REMINDER_SECONDS,
+                safe_int('translation_confirmation_reminder_delay', DEFAULT_CONFIRM_TRANSLATION_REMINDER_SECONDS)
+            )
+        )
         self.sub_folder = addon.getSetting('sub_folder') or "/storage/emulated/0/Download/"
         legacy_mkvinfo_path = addon.getSetting('mkvinfo_path').strip()
         legacy_mkvextract_path = addon.getSetting('mkvextract_path').strip()
@@ -1094,6 +1161,7 @@ class TranslatarrMonitor(xbmc.Monitor):
             f"notify={self.use_notifications}, "
             f"require_translation_confirmation={self.require_translation_confirmation}, "
             f"translation_confirmation_delay={self.translation_confirmation_delay}, "
+            f"translation_confirmation_reminder_delay={self.translation_confirmation_reminder_delay}, "
             f"stats={self.show_stats}, "
             f"sdh_hi_removal={self.remove_sdh_hi_cues}, "
             f"dual_language={self.dual_language_display}, "

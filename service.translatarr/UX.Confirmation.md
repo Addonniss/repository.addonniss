@@ -25,12 +25,13 @@ This is meant to prevent wasted translation time and provider cost when the curr
   - not a blocking yes/no dialog
   - not a timed notification
 - Overlay action:
-  - one button only: `Translate Subtitle`
+  - `Translate`: approve and start translation
+  - `Remind in Ns`: hide the prompt temporarily and remind later
+  - `Skip`: suppress this subtitle candidate for the current playback session
 - Dismiss behavior:
-  - closing the overlay
-  - pressing other actions that dismiss it
-  - playback stop/end
-  all count as dismissal for the current subtitle candidate
+  - Back, navigation, seeking, or closing the overlay behave like the reminder action
+  - only explicit `Skip` rejects the current subtitle candidate
+  - playback stop/end clears the current playback state
 - Overlay lifetime:
   - no timeout
   - stays visible until user explicitly acts or dismisses it
@@ -52,9 +53,9 @@ This applies to:
 - already translated subtitles
 - embedded target-language subtitles found locally or through remote probe
 
-### 2. Dismissal suppresses only the current candidate
+### 2. Skip suppresses only the current candidate
 
-If the user dismisses the overlay:
+If the user presses `Skip`:
 
 - do not translate that exact subtitle candidate immediately
 - do not keep re-showing the overlay on every poll
@@ -63,9 +64,15 @@ If the user dismisses the overlay:
 
 This avoids hard-blocking the session if the user dismisses the overlay accidentally or changes their mind later by loading another subtitle.
 
+If the user presses the reminder button, Back, navigation, or seeking:
+
+- hide the overlay temporarily
+- keep the current subtitle candidate pending
+- show the prompt again after the configured reminder delay
+
 ### 3. Approval is one-time per candidate
 
-If the user presses `Translate Subtitle`:
+If the user presses `Translate`:
 
 - approve only that current candidate
 - run the normal translation flow once
@@ -104,19 +111,19 @@ This is acceptable for the first implementation because:
 
 - the user explicitly needs an action target during playback
 - the overlay is non-blocking compared with a modal dialog
-- dismissal can be treated as "not this subtitle for now"
+- accidental dismissal can be treated as "remind me later"
 
 Still, this creates some UX caveats:
 
 - remote-control navigation may move focus to the overlay immediately
-- some users may dismiss it by pressing navigation/back/select unintentionally
-- dismissal must be safe and non-destructive
+- some users may press navigation/back/select unintentionally
+- accidental input must be safe and non-destructive
 
 That is why we keep the behavior simple:
 
-- one action button
-- any dismissal means "skip this candidate for now"
-- new candidate can re-open the overlay later
+- default focus is the reminder action
+- only explicit `Skip` rejects a candidate
+- new candidate can open the overlay later
 
 ## Candidate Identity
 
@@ -142,7 +149,7 @@ Recommended per-playback candidate states:
   - source candidate detected
   - overlay visible or eligible to be visible
 - `dismissed`
-  - user dismissed this candidate
+  - user explicitly skipped this candidate
   - do not immediately re-show on the next poll
   - suppress it for the rest of the current playback session
   - but do not permanently block the same candidate across future playback sessions
@@ -160,26 +167,26 @@ State resets when:
 
 ### Dismissal refinement
 
-Because overlay focus can be lost unintentionally, `dismissed` should be treated as a soft state, not a permanent rejection.
+Because overlay focus can be lost unintentionally, accidental dismissal should not become `dismissed`.
 
 Recommended behavior:
 
-- dismissal hides the overlay for now
+- The reminder action, Back, and navigation hide the overlay for now
 - the candidate is not translated automatically
-- the candidate is not permanently blacklisted
-- the overlay should not re-show for the same candidate again during the same playback session
-- the overlay can be shown again later when:
-  - a different subtitle candidate appears during the same playback session
-  - playback session restarts
+- the candidate remains pending
+- the overlay can be shown again after the configured reminder delay
+- `Skip` suppresses the candidate for the current playback session
 
 For the first implementation, the important rule is:
 
-- do not permanently suppress a candidate just because the overlay was dismissed once
-- do not re-show the same dismissed candidate again during the same playback session
+- do not suppress a candidate just because the overlay was dismissed once
+- do not re-show before the configured reminder delay
 
 Session rule summary:
 
-- same candidate + same playback session + dismissed:
+- same candidate + same playback session + reminded:
+  - re-show after reminder delay
+- same candidate + same playback session + skipped:
   - do not re-show
 - different candidate + same playback session:
   - may show
@@ -316,10 +323,13 @@ Possible UI helper functions can live in [ui.py](c:/Users/angel/repository.addon
 
 ### Phase 5: Approval action
 
-- when user presses `Translate Subtitle`:
+- when user presses `Translate`:
   - mark candidate approved
   - call existing translation path for that candidate
-- when user dismisses:
+- when user presses the reminder action or dismisses:
+  - keep candidate pending
+  - set reminder delay before re-showing
+- when user presses `Skip`:
   - mark candidate dismissed
 
 ### Phase 6: Embedded-source validation
@@ -338,8 +348,9 @@ The feature is done when:
 2. With `Require translation confirmation = true`
    - detected source subtitle does not translate immediately
    - top-right overlay appears
-   - pressing `Translate Subtitle` starts normal translation
-   - dismissing the overlay suppresses immediate translation for that candidate without permanently blacklisting it
+   - pressing `Translate` starts normal translation
+   - pressing the reminder action or Back hides the prompt temporarily and reminds later
+   - pressing `Skip` suppresses that candidate for the current playback session
    - loading/detecting a different subtitle shows the overlay again
 
 3. If target subtitle already exists
@@ -361,8 +372,6 @@ The feature is done when:
 
 ## Out of Scope for First Implementation
 
-- multiple overlay buttons
-- explicit `No` button
 - timed auto-dismiss
 - persistent approval across playback sessions
 - translating arbitrary currently loaded subtitles unrelated to Translatarr's detected candidate model

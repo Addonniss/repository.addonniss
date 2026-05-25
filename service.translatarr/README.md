@@ -23,12 +23,12 @@ Main capabilities:
 - optional embedded subtitle extraction from MKV and MP4 files
 - optional remote embedded-subtitle extraction through the companion [Translatarr Remote Extractor](https://github.com/addonniss/repository.addonniss/blob/main/translatarr-remote-extractor/README.md)
 
-## What's New in v2.5.0
+## What's New in v2.5.1
 
 - Added `Require translation confirmation (ALPHA)` for users who want to approve a detected source subtitle before Translatarr starts translating it.
 - Source subtitles are loaded first so you can check whether they are usable before spending time or provider credits on translation.
-- Added a top-right `Translate Subtitle` playback overlay button for approval in Auto and Manual modes.
-- Added `Translation confirmation delay` so you can choose how many seconds Translatarr waits before showing the confirmation button.
+- Added top-right `Translate`, `Remind in 60s`, and `Skip` playback overlay buttons for confirmation in Auto and Manual modes.
+- Added `Translation confirmation delay` and `Reminder delay` settings so you can control the first prompt and later reminders.
 
 ## Previous Highlights in v2.4.17
 
@@ -64,15 +64,16 @@ When enabled:
 - Translatarr detects a source-language subtitle as usual.
 - The source subtitle is loaded first.
 - Translation is held as a pending candidate.
-- After the configured delay, a `Translate Subtitle` button appears during playback.
-- Pressing the button starts the normal translation flow.
-- Dismissing the overlay skips that subtitle candidate for the current playback session.
+- After the configured delay, `Translate`, `Remind in 60s`, and `Skip` buttons appear during playback.
+- `Translate` starts the normal translation flow.
+- `Remind in 60s`, Back, navigation, or seeking hides the prompt temporarily and shows it again after the configured reminder delay.
+- `Skip` suppresses that subtitle candidate for the current playback session.
 
 Important limitations:
 
 - This is marked ALPHA because Kodi overlay focus is not seamless on all skins and devices.
-- When the confirmation button appears, it takes focus.
-- Pressing select approves translation, but back, navigation, seeking, or other playback actions may dismiss confirmation for the current subtitle.
+- When the confirmation prompt appears, it takes focus.
+- The default focused action is the reminder button, so accidental select/back/navigation behavior should not skip the subtitle candidate.
 - If your subtitle download UI or player controls stay visible, increase `Translation confirmation delay` to give yourself more time to close Kodi UI and judge subtitle sync.
 
 This confirmation applies to normal detected external source subtitles in Auto and Manual modes. Existing target-language subtitles still skip translation, and embedded source extraction keeps its direct flow.

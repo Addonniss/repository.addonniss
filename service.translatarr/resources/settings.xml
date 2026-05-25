@@ -26,6 +26,19 @@
                         <dependency type="visible" setting="require_translation_confirmation">true</dependency>
                     </dependencies>
                 </setting>
+                <setting id="translation_confirmation_reminder_delay" type="integer" label="30099" help="30100">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>2</minimum>
+                        <step>1</step>
+                        <maximum>120</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>60</default>
+                    <dependencies>
+                        <dependency type="visible" setting="require_translation_confirmation">true</dependency>
+                    </dependencies>
+                </setting>
                 <setting id="translation_mode" type="string" label="30039" help="30040">
                     <level>0</level>
                     <constraints>

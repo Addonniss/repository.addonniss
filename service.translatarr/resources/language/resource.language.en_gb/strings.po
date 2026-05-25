@@ -166,11 +166,11 @@ msgid "Require translation confirmation (ALPHA)"
 msgstr ""
 
 msgctxt "#30092"
-msgid "When enabled, Translatarr waits for you to approve translation of a newly detected source subtitle during playback. The confirmation button takes focus: pressing select starts translation, while back, navigation, seeking, or other playback actions can dismiss it for the current subtitle."
+msgid "When enabled, Translatarr waits for you to approve translation of a newly detected source subtitle during playback. Translate starts translation, Skip ignores this subtitle candidate, and Remind Later or Back hides the prompt temporarily."
 msgstr ""
 
 msgctxt "#30093"
-msgid "Translate Subtitle"
+msgid "Translate"
 msgstr ""
 
 msgctxt "#30094"
@@ -178,7 +178,23 @@ msgid "Translation confirmation delay"
 msgstr ""
 
 msgctxt "#30095"
-msgid "Seconds to wait after loading a source subtitle before showing the confirmation button. Increase this if you need more time to close Kodi subtitle windows or check subtitle sync before the button takes focus."
+msgid "Seconds to wait after loading a source subtitle before showing the confirmation buttons. Increase this if you need more time to close Kodi subtitle windows or check subtitle sync before the prompt takes focus."
+msgstr ""
+
+msgctxt "#30096"
+msgid "Remind in {0}s"
+msgstr ""
+
+msgctxt "#30098"
+msgid "Skip"
+msgstr ""
+
+msgctxt "#30099"
+msgid "Reminder delay"
+msgstr ""
+
+msgctxt "#30100"
+msgid "Seconds to wait before showing the translation confirmation prompt again after Remind Later or Back. Allowed range is 2 to 120 seconds. Skip will still suppress the prompt for the current subtitle."
 msgstr ""
 
 msgctxt "#30038"

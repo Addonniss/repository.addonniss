@@ -1,7 +1,11 @@
+v2.5.1
+- Added Remind and Skip playback overlay buttons
+- Added a configurable reminder delay so Back, navigation, and the reminder button hide the prompt temporarily instead of skipping the current subtitle candidate
+
 v2.5.0
 - Added optional Translation Confirmation (ALPHA) so Translatarr can load a detected source subtitle first and wait for user approval before starting translation
 - Added a playback overlay button for approving source-subtitle translation in Auto and Manual modes, helping avoid wasted translation on subtitles that are out of sync
-- Added a configurable confirmation delay so users can choose how long to review the loaded source subtitle before the confirmation button takes focus
+- Added a configurable confirmation delay so users can choose how long to review the loaded source subtitle before the confirmation prompt takes focus
 - Preserved target-language subtitle detection and embedded-source extraction behavior so existing target subtitles and intentional embedded extraction flows continue to skip confirmation
 
 v2.4.17
