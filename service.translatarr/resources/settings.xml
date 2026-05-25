@@ -8,6 +8,24 @@
                     <control type="toggle" />
                     <default>true</default>
                 </setting>
+                <setting id="require_translation_confirmation" type="boolean" label="30091" help="30092">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+                <setting id="translation_confirmation_delay" type="integer" label="30094" help="30095">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>0</minimum>
+                        <step>1</step>
+                        <maximum>60</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>2</default>
+                    <dependencies>
+                        <dependency type="visible" setting="require_translation_confirmation">true</dependency>
+                    </dependencies>
+                </setting>
                 <setting id="translation_mode" type="string" label="30039" help="30040">
                     <level>0</level>
                     <constraints>
@@ -46,87 +64,6 @@
                 </setting>
             </group>
         </category>
-        <category id="embedded_subtitles" label="30075">
-            <group id="embedded_behavior" label="30085">
-                <setting id="force_embedded_source_extraction" type="boolean" label="30073" help="30074">
-                    <level>0</level>
-                    <control type="toggle" />
-                    <default>false</default>
-                </setting>
-            </group>
-            <group id="embedded_subtitles" label="30086">
-                <setting id="enable_embedded_subtitle_extraction" type="boolean" label="30063" help="30064">
-                    <level>0</level>
-                    <control type="toggle" />
-                    <default>false</default>
-                </setting>
-                <setting id="mkvtoolnix_folder" type="path" label="30065" help="30066">
-                    <level>0</level>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                        <writable>false</writable>
-                    </constraints>
-                    <control type="button" format="path" />
-                    <default />
-                    <dependencies>
-                        <dependency type="visible" setting="enable_embedded_subtitle_extraction">true</dependency>
-                    </dependencies>
-                </setting>
-                <setting id="ffmpeg_folder" type="path" label="30067" help="30068">
-                    <level>0</level>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                        <writable>false</writable>
-                    </constraints>
-                    <control type="button" format="path" />
-                    <default />
-                    <dependencies>
-                        <dependency type="visible" setting="enable_embedded_subtitle_extraction">true</dependency>
-                    </dependencies>
-                </setting>
-            </group>
-            <group id="remote_extractor">
-                <setting id="remote_extractor_enabled" type="boolean" label="30077" help="30078">
-                    <level>0</level>
-                    <control type="toggle" />
-                    <default>false</default>
-                </setting>
-                <setting id="remote_extractor_url" type="string" label="30079" help="30080">
-                    <level>0</level>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
-                    <control type="edit" format="string" />
-                    <default />
-                    <dependencies>
-                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
-                    </dependencies>
-                </setting>
-                <setting id="remote_extractor_token" type="string" label="30081" help="30082">
-                    <level>0</level>
-                    <constraints>
-                        <allowempty>true</allowempty>
-                    </constraints>
-                    <control type="edit" format="string" />
-                    <default />
-                    <dependencies>
-                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
-                    </dependencies>
-                </setting>
-                <setting id="remote_extractor_timeout" type="integer" label="30083" help="30084">
-                    <level>0</level>
-                    <constraints>
-                        <minimum>10</minimum>
-                        <maximum>600</maximum>
-                    </constraints>
-                    <control type="edit" format="integer" />
-                    <default>480</default>
-                    <dependencies>
-                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
-                    </dependencies>
-                </setting>
-            </group>
-        </category>
         <category id="ai_engine" label="30007">
             <group id="2" label="30007">
                 <setting id="provider" type="string" label="30008" help="30009">
@@ -158,6 +95,9 @@
                     <level>0</level>
                     <constraints>
                         <options>
+                            <option label="Gemini 3.5 Flash">Gemini 3.5 Flash</option>
+                            <option label="Gemini 3.1 Flash-Lite">Gemini 3.1 Flash-Lite</option>
+                            <option label="Fast Mode - Gemini 3.1 Flash-Lite">Fast Mode - Gemini 3.1 Flash-Lite</option>
                             <option label="Gemini 2.5 Pro">Gemini 2.5 Pro</option>
                             <option label="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
                             <option label="Fast Mode - Gemini 2.5 Flash">Fast Mode - Gemini 2.5 Flash</option>
@@ -304,11 +244,6 @@
         </category>
         <category id="tuning" label="30014">
             <group id="3">
-                <setting id="dual_language_display" type="boolean" label="30061" help="30062">
-                    <level>0</level>
-                    <control type="toggle" />
-                    <default>false</default>
-                </setting>
                 <setting id="source_lang" type="string" label="30015" help="30016">
                     <level>0</level>
                     <constraints>
@@ -835,6 +770,92 @@
                     <level>0</level>
                     <control type="toggle" />
                     <default>false</default>
+                </setting>
+                <setting id="dual_language_display" type="boolean" label="30061" help="30062">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+            </group>
+        </category>
+        <category id="embedded_subtitles" label="30075">
+            <group id="embedded_behavior" label="30085">
+                <setting id="force_embedded_source_extraction" type="boolean" label="30073" help="30074">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+            </group>
+            <group id="embedded_subtitles" label="30086">
+                <setting id="enable_embedded_subtitle_extraction" type="boolean" label="30063" help="30064">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+                <setting id="mkvtoolnix_folder" type="path" label="30065" help="30066">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                        <writable>false</writable>
+                    </constraints>
+                    <control type="button" format="path" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="enable_embedded_subtitle_extraction">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="ffmpeg_folder" type="path" label="30067" help="30068">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                        <writable>false</writable>
+                    </constraints>
+                    <control type="button" format="path" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="enable_embedded_subtitle_extraction">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+            <group id="remote_extractor">
+                <setting id="remote_extractor_enabled" type="boolean" label="30077" help="30078">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+                <setting id="remote_extractor_url" type="string" label="30079" help="30080">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="remote_extractor_token" type="string" label="30081" help="30082">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="remote_extractor_timeout" type="integer" label="30083" help="30084">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>10</minimum>
+                        <maximum>600</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>480</default>
+                    <dependencies>
+                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
+                    </dependencies>
                 </setting>
             </group>
         </category>

@@ -19,6 +19,19 @@ from languages import get_lang_params, get_iso_variants, get_active_language_set
 
 ADDON_ID = 'service.translatarr'
 ADDON = xbmcaddon.Addon(ADDON_ID)
+ADDON_PATH = ADDON.getAddonInfo('path')
+
+CONFIRM_TRANSLATION_BUTTON_CONTROL_ID = 3012
+CONFIRM_TRANSLATION_OVERLAY_XML = "script-translatarr-confirmation-overlay.xml"
+DEFAULT_CONFIRM_TRANSLATION_DELAY_SECONDS = 2
+MAX_CONFIRM_TRANSLATION_DELAY_SECONDS = 60
+ACTION_SELECT_ITEM = 7
+ACTION_PLAYER_STOP = 13
+ACTION_NAV_BACK = 92
+ACTION_MOUSE_MOVE = 107
+ACTION_MOUSE_LEFT_CLICK = 100
+ACTION_MOUSE_DOUBLE_CLICK = 103
+ACTION_MOUSE_DRAG = 106
 
 # Special folder for Translatarr translations (profile-safe)
 TRANSLATARR_SUB_FOLDER = xbmcvfs.translatePath(
@@ -183,6 +196,25 @@ def _platform_name():
     if remote_extractor.is_linux():
         return "Linux"
     return "Other"
+
+
+def _normalize_candidate_path(path_value):
+    return (path_value or "").replace("\\", "/").rstrip("/").lower()
+
+
+def _build_translation_candidate_key(path_value, mtime_value, size_value):
+    return "{0}|{1}|{2}".format(
+        _normalize_candidate_path(path_value),
+        int(mtime_value or 0),
+        int(size_value or 0)
+    )
+
+
+def _foreground_ui_blocks_confirmation_overlay():
+    # Kodi can report fullscreen playback chrome or invisible player dialogs as
+    # the current dialog for the whole playback session. Blocking on those keeps
+    # the confirmation overlay from ever opening, so only defer while seeking.
+    return xbmc.getCondVisibility("Player.Seeking")
 
 
 def _tool_exists(tool_name, folder_path=None):
@@ -499,6 +531,50 @@ def process_subtitles(original_path, monitor, force_retranslate=False, save_path
         return False
 
 # ----------------------------------------------------------
+# Translation Confirmation Overlay
+# ----------------------------------------------------------
+class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
+
+    def __init__(self, *args, **kwargs):
+        xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
+        self.service = None
+
+    def onInit(self):  # pylint: disable=invalid-name
+        try:
+            button = self.getControl(CONFIRM_TRANSLATION_BUTTON_CONTROL_ID)
+            if self.service:
+                button.setLabel(self.service.get_confirmation_overlay_label())
+            self.setFocusId(CONFIRM_TRANSLATION_BUTTON_CONTROL_ID)
+        except RuntimeError:
+            pass
+
+    def onClick(self, control_id):  # pylint: disable=invalid-name
+        if control_id == CONFIRM_TRANSLATION_BUTTON_CONTROL_ID and self.service:
+            self.service.approve_translation_confirmation()
+
+    def onAction(self, action):  # pylint: disable=invalid-name
+        action_id = action.getId()
+        if action_id == ACTION_SELECT_ITEM and self.service:
+            focused_id = self.getFocusId()
+            if focused_id == CONFIRM_TRANSLATION_BUTTON_CONTROL_ID:
+                self.service.approve_translation_confirmation()
+                return
+        elif action_id in (
+            ACTION_MOUSE_MOVE,
+            ACTION_MOUSE_LEFT_CLICK,
+            ACTION_MOUSE_DOUBLE_CLICK,
+            ACTION_MOUSE_DRAG,
+        ):
+            return
+
+        if self.service:
+            user_initiated = action_id != ACTION_PLAYER_STOP
+            self.service.dismiss_translation_confirmation(user_initiated=user_initiated)
+        else:
+            self.close()
+
+
+# ----------------------------------------------------------
 # Monitor
 # ----------------------------------------------------------
 class TranslatarrMonitor(xbmc.Monitor):
@@ -538,6 +614,197 @@ class TranslatarrMonitor(xbmc.Monitor):
         except Exception as e:
             log(f"Failed to load subtitle: {e}", "error", self)
             return False
+
+    def get_confirmation_overlay_label(self):
+        return ADDON.getLocalizedString(30093) or "Translate Subtitle"
+
+    def close_translation_confirmation_overlay(self):
+        overlay = getattr(self, "translation_confirmation_overlay", None)
+        if not overlay:
+            self.translation_confirmation_overlay = None
+            return
+        try:
+            overlay.close()
+        except RuntimeError:
+            pass
+        self.translation_confirmation_overlay = None
+
+    def clear_translation_confirmation_candidate(self, close_overlay=True, clear_dismissals=False):
+        if close_overlay:
+            self.close_translation_confirmation_overlay()
+        self.pending_translation_candidate = None
+        self.approved_translation_candidate_key = None
+        self.translation_confirmation_eligible_at = 0
+        if clear_dismissals:
+            self.dismissed_translation_candidate_keys = set()
+
+    def return_to_fullscreen_for_translation_confirmation(self, candidate):
+        try:
+            if xbmc.Player().isPlayingVideo():
+                xbmc.executebuiltin("ActivateWindow(fullscreenvideo)")
+                delay_seconds = getattr(
+                    self,
+                    "translation_confirmation_delay",
+                    DEFAULT_CONFIRM_TRANSLATION_DELAY_SECONDS
+                )
+                self.translation_confirmation_eligible_at = time.time() + delay_seconds
+                log(
+                    "Loaded source subtitle and returned to fullscreen before translation confirmation: {0} | delay={1}s".format(
+                        candidate.get("path"),
+                        delay_seconds
+                    ),
+                    "debug",
+                    self
+                )
+        except Exception as e:
+            log(f"Failed to return to fullscreen before translation confirmation: {e}", "debug", self)
+
+    def show_translation_confirmation_overlay(self):
+        if not getattr(self, "require_translation_confirmation", False):
+            return
+        candidate = getattr(self, "pending_translation_candidate", None)
+        if not candidate or candidate.get("key") in getattr(self, "dismissed_translation_candidate_keys", set()):
+            return
+        eligible_at = getattr(self, "translation_confirmation_eligible_at", 0)
+        if eligible_at and time.time() < eligible_at:
+            return
+        if _foreground_ui_blocks_confirmation_overlay():
+            log(
+                "Delaying translation confirmation overlay because another Kodi dialog/player UI is in front.",
+                "debug",
+                self
+            )
+            return
+        if self.translation_confirmation_overlay:
+            return
+
+        self.translation_confirmation_overlay = TranslatarrConfirmationOverlay(
+            CONFIRM_TRANSLATION_OVERLAY_XML,
+            ADDON_PATH,
+            "default",
+            "1080i",
+        )
+        self.translation_confirmation_overlay.service = self
+        self.translation_confirmation_overlay.show()
+        log(
+            "Opened translation confirmation overlay for candidate: {0}".format(
+                candidate.get("path")
+            ),
+            "debug",
+            self
+        )
+
+    def approve_translation_confirmation(self):
+        candidate = getattr(self, "pending_translation_candidate", None)
+        if not candidate:
+            self.close_translation_confirmation_overlay()
+            return
+
+        self.approved_translation_candidate_key = candidate.get("key")
+        self.dismissed_translation_candidate_keys.discard(candidate.get("key"))
+        log(
+            "Approved translation confirmation for candidate: {0}".format(
+                candidate.get("path")
+            ),
+            "debug",
+            self
+        )
+        self.close_translation_confirmation_overlay()
+
+    def dismiss_translation_confirmation(self, user_initiated=True):
+        candidate = getattr(self, "pending_translation_candidate", None)
+        if candidate:
+            self.dismissed_translation_candidate_keys.add(candidate.get("key"))
+            if self.approved_translation_candidate_key == candidate.get("key"):
+                self.approved_translation_candidate_key = None
+            log(
+                "Dismissed translation confirmation for candidate: {0} | user_initiated={1}".format(
+                    candidate.get("path"),
+                    user_initiated
+                ),
+                "debug",
+                self
+            )
+        self.close_translation_confirmation_overlay()
+
+    def build_translation_candidate(self, source_path, source_mtime, source_size, force_retranslate=False, save_path=None, show_source_immediately=True):
+        return {
+            "path": source_path,
+            "mtime": source_mtime,
+            "size": source_size,
+            "key": _build_translation_candidate_key(source_path, source_mtime, source_size),
+            "force_retranslate": force_retranslate,
+            "save_path": save_path,
+            "show_source_immediately": show_source_immediately,
+        }
+
+    def should_bypass_translation_confirmation(self, source_path):
+        normalized_path = _normalize_candidate_path(source_path)
+        return normalized_path in getattr(self, "confirmation_bypass_source_paths", set())
+
+    def prepare_source_candidate_for_translation(self, candidate):
+        if self.should_bypass_translation_confirmation(candidate.get("path")):
+            return "process_now"
+
+        if not getattr(self, "require_translation_confirmation", False):
+            return "process_now"
+
+        candidate_key = candidate.get("key")
+        if candidate_key == getattr(self, "approved_translation_candidate_key", None):
+            return "process_now"
+
+        if candidate_key in getattr(self, "dismissed_translation_candidate_keys", set()):
+            return "dismissed"
+
+        current_candidate = getattr(self, "pending_translation_candidate", None)
+        if not current_candidate or current_candidate.get("key") != candidate_key:
+            self.pending_translation_candidate = candidate
+            self.translation_confirmation_eligible_at = 0
+            if candidate.get("show_source_immediately"):
+                self.load_subtitle_if_new(candidate.get("path"))
+            self.return_to_fullscreen_for_translation_confirmation(candidate)
+            self.show_translation_confirmation_overlay()
+            return "deferred"
+
+        self.pending_translation_candidate = candidate
+        if candidate.get("show_source_immediately"):
+            self.load_subtitle_if_new(candidate.get("path"))
+        self.show_translation_confirmation_overlay()
+        return "deferred"
+
+    def finalize_translation_candidate_attempt(self, candidate, success):
+        candidate_key = candidate.get("key") if candidate else None
+        candidate_path = candidate.get("path") if candidate else ""
+
+        if candidate_key and self.approved_translation_candidate_key == candidate_key:
+            self.approved_translation_candidate_key = None
+
+        if candidate_key and not success and getattr(self, "require_translation_confirmation", False):
+            self.dismissed_translation_candidate_keys.add(candidate_key)
+
+        if getattr(self, "pending_translation_candidate", None) and self.pending_translation_candidate.get("key") == candidate_key:
+            self.pending_translation_candidate = None
+
+        if success and candidate_path:
+            self.dismissed_translation_candidate_keys.discard(candidate_key)
+
+        self.close_translation_confirmation_overlay()
+
+    def process_translation_candidate(self, candidate):
+        self.is_busy = True
+        try:
+            success = process_subtitles(
+                candidate.get("path"),
+                self,
+                force_retranslate=candidate.get("force_retranslate", False),
+                save_path=candidate.get("save_path"),
+                show_source_immediately=candidate.get("show_source_immediately", True)
+            )
+        finally:
+            self.is_busy = False
+
+        self.finalize_translation_candidate_attempt(candidate, success)
+        return success
 
     def kodi_rpc(self, method, params=None):
         try:
@@ -706,6 +973,7 @@ class TranslatarrMonitor(xbmc.Monitor):
         # ------------------------------------------------------------
         mode = addon.getSetting('translation_mode')
         self.service_enabled = safe_bool('service_enabled', True)
+        self.require_translation_confirmation = safe_bool('require_translation_confirmation', True)
         self.auto_mode = mode == "Auto"
         log(f"Translation mode: {mode}", "debug", self)
         self.debug_mode = safe_bool('debug_mode', False)
@@ -721,6 +989,13 @@ class TranslatarrMonitor(xbmc.Monitor):
         # Numeric / string settings
         # ------------------------------------------------------------
         self.chunk_size = safe_int('chunk_size', 100)
+        self.translation_confirmation_delay = max(
+            0,
+            min(
+                MAX_CONFIRM_TRANSLATION_DELAY_SECONDS,
+                safe_int('translation_confirmation_delay', DEFAULT_CONFIRM_TRANSLATION_DELAY_SECONDS)
+            )
+        )
         self.sub_folder = addon.getSetting('sub_folder') or "/storage/emulated/0/Download/"
         legacy_mkvinfo_path = addon.getSetting('mkvinfo_path').strip()
         legacy_mkvextract_path = addon.getSetting('mkvextract_path').strip()
@@ -817,6 +1092,8 @@ class TranslatarrMonitor(xbmc.Monitor):
             f"mode={'Auto' if self.auto_mode else 'Manual'}, "
             f"debug={self.debug_mode}, "
             f"notify={self.use_notifications}, "
+            f"require_translation_confirmation={self.require_translation_confirmation}, "
+            f"translation_confirmation_delay={self.translation_confirmation_delay}, "
             f"stats={self.show_stats}, "
             f"sdh_hi_removal={self.remove_sdh_hi_cues}, "
             f"dual_language={self.dual_language_display}, "
@@ -854,12 +1131,16 @@ class TranslatarrMonitor(xbmc.Monitor):
 
         log(settings_snapshot, "debug", self, force=True)
 
+        if not self.require_translation_confirmation:
+            self.clear_translation_confirmation_candidate(close_overlay=True, clear_dismissals=True)
+
         if previous_service_enabled and not self.service_enabled:
             self.reset_playback_state()
         elif not previous_service_enabled and self.service_enabled and xbmc.Player().isPlayingVideo():
             self.mark_playback_started("Translation service re-enabled")
 
     def reset_playback_state(self):
+        self.close_translation_confirmation_overlay()
         self.last_source_state = {}
         self.last_processed_video = None
         self.last_processed_source_path = None
@@ -874,6 +1155,10 @@ class TranslatarrMonitor(xbmc.Monitor):
         self.last_embedded_unavailable_notify_key = None
         self.logged_stale_manual_source_paths = set()
         self.logged_auto_temp_skip_paths = set()
+        self.pending_translation_candidate = None
+        self.approved_translation_candidate_key = None
+        self.dismissed_translation_candidate_keys = set()
+        self.confirmation_bypass_source_paths = set()
 
     def handle_embedded_subtitle_fallback(self, media_path, output_dir, mode_label):
         if not self.enable_embedded_subtitle_extraction and not self.remote_extractor_enabled:
@@ -1058,6 +1343,9 @@ class TranslatarrMonitor(xbmc.Monitor):
                         "debug",
                         self
                     )
+                extracted_file = remote_result.get("extracted_file")
+                if extracted_file:
+                    self.confirmation_bypass_source_paths.add(_normalize_candidate_path(extracted_file))
                 notify_extraction_result("Remote", True)
                 return "source_extracted", True
 
@@ -1097,6 +1385,9 @@ class TranslatarrMonitor(xbmc.Monitor):
                     "info",
                     self
                 )
+                output_path = result.get("output_path")
+                if output_path:
+                    self.confirmation_bypass_source_paths.add(_normalize_candidate_path(output_path))
                 notify_extraction_result("Local", True)
                 return "source_extracted", True
 
@@ -1351,6 +1642,9 @@ class TranslatarrMonitor(xbmc.Monitor):
             self
         )
 
+        if not newest_source_file and not getattr(self, "approved_translation_candidate_key", None):
+            self.clear_translation_confirmation_candidate(close_overlay=True)
+
         if not newest_source_file:
             extraction_media_path = best_playing_path or playing_file
             embedded_status = self.handle_embedded_subtitle_fallback(
@@ -1386,6 +1680,15 @@ class TranslatarrMonitor(xbmc.Monitor):
             newest_target_mtime >= newest_source_mtime
         )
 
+        pending_candidate = getattr(self, "pending_translation_candidate", None)
+        if (
+            pending_candidate and
+            newest_source_file and
+            pending_candidate.get("path") == newest_source_file and
+            target_covers_source
+        ):
+            self.clear_translation_confirmation_candidate(close_overlay=True)
+
         if source_changed and not target_covers_source:
             safe_video_name = safe_filename(video_name)
             final_file_name = f"{safe_video_name}.{self.target_lang_iso}.srt"
@@ -1393,17 +1696,27 @@ class TranslatarrMonitor(xbmc.Monitor):
 
             log(f"Newest source subtitle detected: {newest_source_file}", "debug", self)
 
-            self.is_busy = True
             try:
-                success = process_subtitles(
-                    newest_source_file,
-                    self,
-                    force_retranslate=True,
-                    save_path=save_path,
-                    show_source_immediately=True
-                )
-            finally:
-                self.is_busy = False
+                source_size = xbmcvfs.Stat(newest_source_file).st_size()
+            except Exception:
+                source_size = 0
+
+            candidate = self.build_translation_candidate(
+                newest_source_file,
+                newest_source_mtime,
+                source_size,
+                force_retranslate=True,
+                save_path=save_path,
+                show_source_immediately=True
+            )
+            candidate_action = self.prepare_source_candidate_for_translation(candidate)
+
+            if candidate_action == "deferred":
+                return
+            if candidate_action == "dismissed":
+                return
+
+            success = self.process_translation_candidate(candidate)
 
             if success:
                 self.last_processed_source_path = newest_source_file
@@ -1504,6 +1817,9 @@ class TranslatarrMonitor(xbmc.Monitor):
         target_candidates = matched_target_candidates or fallback_target_candidates
         source_candidates = matched_source_candidates or fallback_source_candidates
 
+        if not source_candidates and not getattr(self, "approved_translation_candidate_key", None):
+            self.clear_translation_confirmation_candidate(close_overlay=True)
+
         if not source_candidates and not target_candidates:
             extraction_media_path = best_playing_path or playing_file
             embedded_status = self.handle_embedded_subtitle_fallback(
@@ -1593,6 +1909,9 @@ class TranslatarrMonitor(xbmc.Monitor):
                         target_mtime = target_stat.st_mtime()
 
                         if target_stat.st_size() > 100 and target_mtime >= mtime:
+                            pending_candidate = getattr(self, "pending_translation_candidate", None)
+                            if pending_candidate and pending_candidate.get("path") == full_path:
+                                self.clear_translation_confirmation_candidate(close_overlay=True)
                             log(
                                 f"Target subtitle already exists and is same-age or newer than source. Skipping translation for: {full_path}",
                                 "debug",
@@ -1613,16 +1932,22 @@ class TranslatarrMonitor(xbmc.Monitor):
                     else:
                         continue
 
-                self.is_busy = True
-                try:
-                    success = process_subtitles(
-                        full_path,
-                        self,
-                        force_retranslate=force_retranslate,
-                        show_source_immediately=True
-                    )
-                finally:
-                    self.is_busy = False
+                candidate = self.build_translation_candidate(
+                    full_path,
+                    mtime,
+                    size,
+                    force_retranslate=force_retranslate,
+                    save_path=None,
+                    show_source_immediately=True
+                )
+                candidate_action = self.prepare_source_candidate_for_translation(candidate)
+
+                if candidate_action == "deferred":
+                    return
+                if candidate_action == "dismissed":
+                    return
+
+                success = self.process_translation_candidate(candidate)
 
                 if success:
                     try:

@@ -123,6 +123,8 @@ class BaseTranslator:
 class GeminiTranslator(BaseTranslator):
 
     PRICING = {
+        "gemini-3.5-flash": (0.0000015, 0.0000090),
+        "gemini-3.1-flash-lite": (0.00000025, 0.0000015),
         "gemini-2.5-pro": (0.00000125, 0.0000100),
         "gemini-2.0-flash": (0.0000001, 0.0000004),
         "gemini-1.5-flash": (0.0000000, 0.0000000),
@@ -136,6 +138,9 @@ class GeminiTranslator(BaseTranslator):
         self.fast_mode = False
 
         model_map = {
+            "Gemini 3.5 Flash": "gemini-3.5-flash",
+            "Gemini 3.1 Flash-Lite": "gemini-3.1-flash-lite",
+            "Fast Mode - Gemini 3.1 Flash-Lite": "gemini-3.1-flash-lite",
             "Gemini 2.5 Pro": "gemini-2.5-pro",
             "Gemini 2.5 Flash": "gemini-2.5-flash",
             "Fast Mode - Gemini 2.5 Flash": "gemini-2.5-flash",
@@ -148,7 +153,10 @@ class GeminiTranslator(BaseTranslator):
 
         selected_model = ADDON.getSetting('model')
         self.model = model_map.get(selected_model, "gemini-2.5-flash")
-        self.fast_mode = selected_model == "Fast Mode - Gemini 2.5 Flash"
+        self.fast_mode = selected_model in (
+            "Fast Mode - Gemini 2.5 Flash",
+            "Fast Mode - Gemini 3.1 Flash-Lite",
+        )
 
     def translate_batch(self, text_list, expected_count):
 
@@ -199,7 +207,7 @@ class GeminiTranslator(BaseTranslator):
             }
         }
 
-        if self.fast_mode and self.model == "gemini-2.5-flash":
+        if self.fast_mode and self.model in ("gemini-2.5-flash", "gemini-3.1-flash-lite"):
             payload["generationConfig"]["thinkingConfig"] = {
                 "thinkingBudget": 0
             }

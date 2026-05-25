@@ -1,0 +1,50 @@
+services:
+  translatarr-decision-service:
+    image: ghcr.io/addonniss/translatarr-decision-service:latest
+    container_name: translatarr-decision-service
+    ports:
+      - "8098:8098"
+    environment:
+      DECISION_API_TOKEN: "CHANGE_ME"
+      DECISION_DELAY_SECONDS: "600"
+      DECISION_TARGET_LANGUAGE_NAME: "Romanian"
+      DECISION_TARGET_LANGUAGE_SUFFIX: "ro"
+      DECISION_SOURCE_LANGUAGE_NAME: "English"
+      DECISION_SOURCE_LANGUAGE_SUFFIX: "en"
+      REMOTE_EXTRACTOR_URL: "http://translatarr-remote-extractor:8097"
+      REMOTE_EXTRACTOR_TOKEN: "CHANGE_ME"
+      REMOTE_EXTRACTOR_TIMEOUT: "900"
+      # Translation provider options:
+      # - gemini: paid Gemini API, requires GEMINI_API_KEY
+      # - libretranslate: local/private LibreTranslate server, requires LIBRETRANSLATE_URL
+      # - none: dry-run checks only; translation fails intentionally if needed
+      TRANSLATION_PROVIDER: "gemini"
+      # Translation style options for Gemini prompts:
+      # - Family-Friendly: clean, neutral, avoids profanity
+      # - Natural: conversational, realistic, avoids literal phrasing
+      # - Gritty / Adult: raw adult tone, preserves profanity and insults
+      # LibreTranslate does not support prompt-level style control.
+      TRANSLATION_STYLE: "Gritty / Adult"
+      GEMINI_API_KEY: "CHANGE_ME"
+      GEMINI_MODEL: "gemini-2.0-flash"
+      GEMINI_TEMPERATURE: "0.15"
+      GEMINI_TOP_P: "0.95"
+      # GEMINI_FAST_MODE only applies to gemini-2.5-flash.
+      # false = normal model behavior; true = request thinking_budget 0 for faster/cheaper 2.5 Flash calls.
+      GEMINI_FAST_MODE: "false"
+      LIBRETRANSLATE_URL: ""
+      LIBRETRANSLATE_API_KEY: ""
+      LIBRETRANSLATE_SOURCE: "en"
+      LIBRETRANSLATE_TARGET: "ro"
+      TRANSLATION_BATCH_SIZE: "100"
+      # Save extracted embedded English next to the movie before translation.
+      # Useful for audit/debug/retry. Set false if you only want the Romanian output.
+      SAVE_SOURCE_SUBTITLE: "true"
+      # Applies to generated target subtitles. Uses atomic write + fsync + read-only chmod.
+      PROTECT_SAVED_SUBTITLES: "true"
+      DISCORD_WEBHOOK_URL: ""
+      DISCORD_NOTIFY_STEPS: "true"
+      MEDIA_PATH_MAPS: "[]"
+    volumes:
+      - /path/to/your/media:/data/media
+    restart: unless-stopped
