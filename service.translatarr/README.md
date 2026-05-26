@@ -7,6 +7,7 @@ It supports these translation providers:
 - Gemini: [model docs](https://ai.google.dev/gemini-api/docs/models/gemini)
 - OpenAI: [GPT-4o](https://platform.openai.com/docs/models/gpt-4o), [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini), [GPT-5 mini](https://platform.openai.com/docs/models/gpt-5-mini/)
 - Anthropic Claude: [models overview](https://platform.claude.com/docs/en/about-claude/models/overview)
+- DeepSeek: [platform](https://platform.deepseek.com/) — V4 Pro and V4 Flash
 - DeepL Free: [API Free plan](https://support.deepl.com/hc/en-us/articles/360021200939-DeepL-API-Free)
 - LibreTranslate: [documentation](https://docs.libretranslate.com/)
 
@@ -23,7 +24,12 @@ Main capabilities:
 - optional embedded subtitle extraction from MKV and MP4 files
 - optional remote embedded-subtitle extraction through the companion [Translatarr Remote Extractor](https://github.com/addonniss/repository.addonniss/blob/main/translatarr-remote-extractor/README.md)
 
-## What's New in v2.5.1
+## What's New in v2.5.2
+
+- Added **DeepSeek** as a new AI translation provider with DeepSeek V4 Pro and DeepSeek V4 Flash model options.
+- Shortened the remind button label to `Remind:XXs` to prevent text scrolling on small buttons.
+
+## Previous Highlights in v2.5.1
 
 - Added `Require translation confirmation (ALPHA)` for users who want to approve a detected source subtitle before Translatarr starts translating it.
 - Source subtitles are loaded first so you can check whether they are usable before spending time or provider credits on translation.
@@ -51,7 +57,7 @@ Configure these items first:
 3. Select a provider.
 4. Enter the required provider credentials or server URL.
 5. Set source and target languages.
-6. Choose a model if you use Gemini, OpenAI, or Anthropic Claude.
+6. Choose a model if you use Gemini, OpenAI, Anthropic Claude, or DeepSeek.
 
 After that, start video playback and download or load subtitles as you normally would in Kodi.
 
@@ -64,9 +70,9 @@ When enabled:
 - Translatarr detects a source-language subtitle as usual.
 - The source subtitle is loaded first.
 - Translation is held as a pending candidate.
-- After the configured delay, `Translate`, `Remind in 60s`, and `Skip` buttons appear during playback.
+- After the configured delay, `Translate`, `Remind:XXs`, and `Skip` buttons appear during playback.
 - `Translate` starts the normal translation flow.
-- `Remind in 60s`, Back, navigation, or seeking hides the prompt temporarily and shows it again after the configured reminder delay.
+- `Remind:XXs`, Back, navigation, or seeking hides the prompt temporarily and shows it again after the configured reminder delay.
 - `Skip` suppresses that subtitle candidate for the current playback session.
 
 Important limitations:
@@ -103,14 +109,6 @@ Use Manual if you want predictable folder-based behavior or if your subtitle add
 
 Requires a Gemini API key. Model selection is available in settings, including:
 
-- Gemini 3.5 Flash
-- Gemini 3.1 Flash-Lite
-- Fast Mode - Gemini 3.1 Flash-Lite
-- Gemini 2.5 Pro
-- Gemini 2.5 Flash
-- Fast Mode - Gemini 2.5 Flash
-- Gemini 2.5 Flash-Lite
-- legacy Gemini 2.0 / 1.5 Flash options for compatibility
 
 Gemini 2.5 Flash remains the default. Flash-Lite is the budget / high-throughput option. Fast Mode keeps the normal model family but reduces thinking for a different speed / UX tradeoff.
 
@@ -138,16 +136,20 @@ Recommended usage:
 ### Anthropic Claude
 
 Requires an Anthropic API key. Model selection is available in settings, including:
-
-- Claude Haiku 4.5
-- Claude Sonnet 4.6
-- Claude Opus 4.7
-
 Recommended usage:
 
 - `Claude Haiku 4.5`: best for lower-cost, faster Claude usage.
 - `Claude Sonnet 4.6`: best all-around Claude option for most users, balancing quality, speed, and cost.
 - `Claude Opus 4.7`: use when you want the highest-end Claude quality for difficult dialogue, tone, or localization nuance.
+
+### DeepSeek
+
+DeepSeek uses an OpenAI-compatible API. Translatarr sends translation requests directly to the DeepSeek chat completions endpoint.
+
+Recommended usage:
+
+- `DeepSeek V4 Pro`: best when you want top-quality translation with the strongest language understanding. Use for nuanced dialogue, idiomatic expressions, and complex subtitle localization.
+- `DeepSeek V4 Flash`: a faster, lower-cost option that still delivers strong translation quality. Best for everyday subtitle translation where speed and affordability are priorities.
 
 ### DeepL Free
 
@@ -170,6 +172,33 @@ Recommended usage:
 
 - `LibreTranslate`: best when you want a self-hosted or home-network translation option with more privacy and no dependency on commercial cloud APIs.
 - It is especially useful if you already run your own server and want local-network control over subtitle translation.
+
+## Pricing
+
+All LLM-based providers charge per token (input + output). Prices below are in **USD per 1 million tokens**, which is the standard unit used by most providers.
+
+| Provider | Model | Input ($/1M) | Output ($/1M) |
+|---|---|---|---|
+| **Gemini** | 2.5 Flash-Lite | $0.01 | $0.04 |
+| | 2.0 Flash (Legacy) | $0.01 | $0.04 |
+| | 3.1 Flash-Lite | $0.025 | $0.15 |
+| | 2.5 Flash | $0.03 | $0.25 |
+| | 3.5 Flash | $0.15 | $0.90 |
+| | 2.5 Pro | $0.125 | $1.00 |
+| **DeepSeek** | V4 Flash | $0.14 | $0.55 |
+| | V4 Pro | $0.27 | $1.10 |
+| **OpenAI** | gpt-4o-mini | $0.15 | $0.60 |
+| | gpt-5-mini | $0.25 | $2.00 |
+| | gpt-4o | $2.50 | $10.00 |
+| **Anthropic** | Claude Haiku 4.5 | $1.00 | $5.00 |
+| | Claude Sonnet 4.6 | $3.00 | $15.00 |
+| | Claude Opus 4.7 | $5.00 | $25.00 |
+
+**DeepL Free** — Free tier with 500,000 characters per month (~10 movies). No per-token billing.
+
+**LibreTranslate** — Free. You host the server yourself, so there are no API costs.
+
+> **Tip:** For a typical movie subtitle (~3,000–5,000 tokens), even the most expensive model costs only a few cents per translation. Budget-friendly options like Gemini 2.5 Flash-Lite or DeepSeek V4 Flash cost fractions of a cent.
 
 ## Embedded Subtitle Extraction
 

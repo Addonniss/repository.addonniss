@@ -646,11 +646,11 @@ class TranslatarrMonitor(xbmc.Monitor):
                 "translation_confirmation_reminder_delay",
                 DEFAULT_CONFIRM_TRANSLATION_REMINDER_SECONDS
             )
-            label_template = ADDON.getLocalizedString(30096) or "Remind in {0}s"
+            label_template = ADDON.getLocalizedString(30096) or "Remind:{0}s"
             try:
                 return label_template.format(reminder_seconds)
             except Exception:
-                return "Remind in {0}s".format(reminder_seconds)
+                return "Remind:{0}s".format(reminder_seconds)
         if action == "skip":
             return ADDON.getLocalizedString(30098) or "Skip"
         return ADDON.getLocalizedString(30093) or "Translate"

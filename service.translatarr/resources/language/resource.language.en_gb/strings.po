@@ -182,7 +182,7 @@ msgid "Seconds to wait after loading a source subtitle before showing the confir
 msgstr ""
 
 msgctxt "#30096"
-msgid "Remind in {0}s"
+msgid "Remind:{0}s"
 msgstr ""
 
 msgctxt "#30098"
@@ -195,6 +195,22 @@ msgstr ""
 
 msgctxt "#30100"
 msgid "Seconds to wait before showing the translation confirmation prompt again after Remind Later or Back. Allowed range is 2 to 120 seconds. Skip will still suppress the prompt for the current subtitle."
+msgstr ""
+
+msgctxt "#30101"
+msgid "DeepSeek API Key"
+msgstr ""
+
+msgctxt "#30102"
+msgid "Enter your DeepSeek API key from platform.deepseek.com."
+msgstr ""
+
+msgctxt "#30103"
+msgid "DeepSeek Model"
+msgstr ""
+
+msgctxt "#30104"
+msgid "Select the DeepSeek model to use for translation. V4 Pro is best for quality; V4 Flash is faster and cheaper."
 msgstr ""
 
 msgctxt "#30038"

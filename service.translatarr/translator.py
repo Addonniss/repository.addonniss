@@ -71,6 +71,8 @@ class BaseTranslator:
             setting_ids.append('temp_openai')
         elif provider == "Anthropic":
             setting_ids.append('temp_anthropic')
+        elif provider == "DeepSeek":
+            setting_ids.append('temp_deepseek')
 
         # Backward compatibility for existing installs that already saved `temp`.
         setting_ids.append('temp')
@@ -493,6 +495,122 @@ class AnthropicTranslator(BaseTranslator):
 
 
 # ==========================================================
+# DEEPSEEK TRANSLATOR
+# ==========================================================
+class DeepSeekTranslator(BaseTranslator):
+
+    PRICING = {
+        "deepseek-chat": (0.00000027, 0.00000110),       # V4 Pro
+        "deepseek-chat-flash": (0.00000014, 0.00000055),  # V4 Flash
+    }
+
+    def __init__(self):
+        self.api_key = ADDON.getSetting('deepseek_api_key')
+        self.temperature = self._get_temperature("DeepSeek")
+
+        model_map = {
+            "DeepSeek V4 Pro": "deepseek-chat",
+            "DeepSeek V4 Flash": "deepseek-chat-flash",
+        }
+
+        self.model = model_map.get(
+            ADDON.getSetting('deepseek_model'),
+            "deepseek-chat"
+        )
+
+    def translate_batch(self, text_list, expected_count):
+
+        if not self.api_key:
+            log("DeepSeek API key missing")
+            return None, 0, 0
+
+        from languages import get_lang_params, get_active_language_setting
+        src_name, _ = get_lang_params(get_active_language_setting(ADDON, "DeepSeek", 'source'))
+        trg_name, _ = get_lang_params(get_active_language_setting(ADDON, "DeepSeek", 'target'))
+
+        if src_name.lower() != "auto-detect":
+            lang_instruction = f"Translate from {src_name} to {trg_name}."
+        else:
+            lang_instruction = f"Detect the source language and translate to {trg_name}."
+
+        prefixed = [f"L{i:03}: {t}" for i, t in enumerate(text_list)]
+        input_text = "\n".join(prefixed)
+
+        style_block = build_style_instruction(trg_name)
+        localization_block = build_localization_instruction()
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a professional subtitle localizer.\n"
+                        f"{lang_instruction}\n\n"
+                        "STRICT RULES (MANDATORY):\n"
+                        "1. Translate strictly line-by-line.\n"
+                        "2. Preserve 'Lxxx:' anchors EXACTLY.\n"
+                        f"3. Return EXACTLY {expected_count} lines.\n"
+                        "4. Return ONLY prefixed translated lines.\n"
+                        "5. Do NOT add commentary.\n\n"
+                        f"{localization_block}\n"
+                        f"{style_block}"
+                    )
+                },
+                {"role": "user", "content": input_text}
+            ],
+            "temperature": self.temperature
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        try:
+            r = requests.post(
+                "https://api.deepseek.com/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+
+            if r.status_code != 200:
+                log(f"DeepSeek error ({self.model}): {r.status_code} | {r.text[:500]}")
+                return None, 0, 0
+
+            data = r.json()
+            raw = (
+                data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+                .strip()
+            )
+
+            translated = self._scrub(raw, expected_count)
+            if not translated:
+                log("DeepSeek scrub failed")
+                return None, 0, 0
+
+            usage = data.get("usage", {})
+            in_t = usage.get("prompt_tokens", 0)
+            out_t = usage.get("completion_tokens", 0)
+
+            return translated, in_t, out_t
+
+        except Exception as e:
+            log(f"DeepSeek exception ({self.model}): {e}")
+            return None, 0, 0
+
+    def calculate_cost(self, input_tokens, output_tokens):
+        in_price, out_price = self.PRICING.get(self.model, (0, 0))
+        return (input_tokens * in_price) + (output_tokens * out_price)
+
+    def get_model_string(self):
+        return f"DeepSeek ({self.model})"
+
+
+# ==========================================================
 # DEEPL TRANSLATOR
 # ==========================================================
 class DeepLTranslator(BaseTranslator):
@@ -710,6 +828,8 @@ def _get_translator():
         return OpenAITranslator()
     if provider == "Anthropic":
         return AnthropicTranslator()
+    if provider == "DeepSeek":
+        return DeepSeekTranslator()
     if provider == "DeepL":
         return DeepLTranslator()
     if provider == "LibreTranslate":

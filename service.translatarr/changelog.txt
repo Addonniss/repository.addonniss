@@ -1,3 +1,7 @@
+v2.5.2
+- Added DeepSeek as a new AI provider with DeepSeek V4 Pro and DeepSeek V4 Flash model options
+- Shortened the confirmation overlay remind button text from "Remind in XXs" to "Remind:XXs" to prevent text scrolling on the button
+
 v2.5.1
 - Added Remind and Skip playback overlay buttons
 - Added a configurable reminder delay so Back, navigation, and the reminder button hide the prompt temporarily instead of skipping the current subtitle candidate
