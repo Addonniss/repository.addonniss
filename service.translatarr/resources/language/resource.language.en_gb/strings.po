@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 
 msgctxt "#30000"
-msgid "Subtitles"
+msgid "Mode"
 msgstr ""
 
 msgctxt "#30001"
@@ -21,16 +21,8 @@ msgctxt "#30004"
 msgid "Kodi must use same path for 'Custom Subtitle Location'"
 msgstr ""
 
-msgctxt "#30005"
-msgid "Enable Real-Time Translation"
-msgstr ""
-
-msgctxt "#30006"
-msgid "ON: Progressive translation during playback. OFF: Wait for full file processing."
-msgstr ""
-
 msgctxt "#30007"
-msgid "AI Engine"
+msgid "Provider"
 msgstr ""
 
 msgctxt "#30008"
@@ -38,7 +30,7 @@ msgid "Active Engine"
 msgstr ""
 
 msgctxt "#30009"
-msgid "Choose between Gemini or OpenAI for processing."
+msgid "Choose between Gemini, OpenAI, Anthropic Claude, DeepL Free, or LibreTranslate for processing."
 msgstr ""
 
 msgctxt "#30010"
@@ -58,7 +50,7 @@ msgid "Select the specific Gemini model version."
 msgstr ""
 
 msgctxt "#30014"
-msgid "Tuning"
+msgid "Translation"
 msgstr ""
 
 msgctxt "#30015"
@@ -153,6 +145,58 @@ msgctxt "#30037"
 msgid "Select the specific GPT model version."
 msgstr ""
 
+msgctxt "#30087"
+msgid "Anthropic API Key"
+msgstr ""
+
+msgctxt "#30088"
+msgid "Enter your Anthropic API key."
+msgstr ""
+
+msgctxt "#30089"
+msgid "Anthropic Model"
+msgstr ""
+
+msgctxt "#30090"
+msgid "Select the specific Claude model version."
+msgstr ""
+
+msgctxt "#30091"
+msgid "Require translation confirmation (ALPHA)"
+msgstr ""
+
+msgctxt "#30092"
+msgid "When enabled, Translatarr waits for you to approve translation of a newly detected source subtitle during playback. Translate starts translation, Skip ignores this subtitle candidate, and Remind Later or Back hides the prompt temporarily."
+msgstr ""
+
+msgctxt "#30093"
+msgid "Translate"
+msgstr ""
+
+msgctxt "#30094"
+msgid "Translation confirmation delay"
+msgstr ""
+
+msgctxt "#30095"
+msgid "Seconds to wait after loading a source subtitle before showing the confirmation buttons. Increase this if you need more time to close Kodi subtitle windows or check subtitle sync before the prompt takes focus."
+msgstr ""
+
+msgctxt "#30096"
+msgid "Remind in {0}s"
+msgstr ""
+
+msgctxt "#30098"
+msgid "Skip"
+msgstr ""
+
+msgctxt "#30099"
+msgid "Reminder delay"
+msgstr ""
+
+msgctxt "#30100"
+msgid "Seconds to wait before showing the translation confirmation prompt again after Remind Later or Back. Allowed range is 2 to 120 seconds. Skip will still suppress the prompt for the current subtitle."
+msgstr ""
+
 msgctxt "#30038"
 msgid "Manual Mode (Advanced)"
 msgstr ""
@@ -179,4 +223,164 @@ msgstr ""
 
 msgctxt "#30044"
 msgid "Monitors custom folder..."
+msgstr ""
+
+msgctxt "#30045"
+msgid "DeepL API Key"
+msgstr ""
+
+msgctxt "#30046"
+msgid "Enter your DeepL API Free key. DeepL Free is machine translation, very fast, and includes 500,000 characters per month."
+msgstr ""
+
+msgctxt "#30047"
+msgid "Source Language (DeepL Supported)"
+msgstr ""
+
+msgctxt "#30048"
+msgid "Only DeepL-supported source languages are shown here for DeepL Free machine translation."
+msgstr ""
+
+msgctxt "#30049"
+msgid "Target Language (DeepL Supported)"
+msgstr ""
+
+msgctxt "#30050"
+msgid "Only DeepL-supported target languages are shown here for DeepL Free machine translation."
+msgstr ""
+
+msgctxt "#30051"
+msgid "LibreTranslate Base URL"
+msgstr ""
+
+msgctxt "#30052"
+msgid "Enter the full LibreTranslate URL starting with http:// or https://. Example: http://your-server:5000 . Make sure your server loaded the needed languages, for example LT_LOAD_ONLY=en,ro. Batch limit also matters: set LT_BATCH_LIMIT above your selected chunk size. 1000 is a good setting."
+msgstr ""
+
+msgctxt "#30053"
+msgid "LibreTranslate API Key"
+msgstr ""
+
+msgctxt "#30054"
+msgid "Optional. Leave empty if your self-hosted LibreTranslate server does not require an API key."
+msgstr ""
+
+msgctxt "#30055"
+msgid "Source Language (LibreTranslate Server)"
+msgstr ""
+
+msgctxt "#30056"
+msgid "Select a source language that exists on your LibreTranslate server. Match this with the languages loaded on the server, for example LT_LOAD_ONLY=en,ro."
+msgstr ""
+
+msgctxt "#30057"
+msgid "Target Language (LibreTranslate Server)"
+msgstr ""
+
+msgctxt "#30058"
+msgid "Select a target language that exists on your LibreTranslate server. Match this with the languages loaded on the server, for example LT_LOAD_ONLY=en,ro."
+msgstr ""
+
+msgctxt "#30059"
+msgid "SDH/HI cue removal"
+msgstr ""
+
+msgctxt "#30060"
+msgid "Removes common hearing-impaired subtitle cues such as sound effects, music markers, and speaker labels when they are not spoken dialogue. Tries to preserve actual dialogue."
+msgstr ""
+
+msgctxt "#30061"
+msgid "Dual-Language Display"
+msgstr ""
+
+msgctxt "#30062"
+msgid "When enabled, each subtitle entry shows the original source text on the first line and the translated text below it. When disabled, Translatarr keeps the current translated-only display."
+msgstr ""
+
+msgctxt "#30063"
+msgid "Enable Local Extraction"
+msgstr ""
+
+msgctxt "#30064"
+msgid "Enables local embedded subtitle extraction with MKVToolNix or FFmpeg when no usable subtitle is found during playback. If both local extraction and Remote Extractor are enabled, Translatarr tries local extraction first. In Auto mode, extracted source subtitles are written to the Translatarr subtitle folder. In Manual mode, they are written to your configured manual subtitle folder."
+msgstr ""
+
+msgctxt "#30065"
+msgid "MKVToolNix Executables Folder"
+msgstr ""
+
+msgctxt "#30066"
+msgid "Optional folder containing mkvinfo and mkvextract. Used for embedded subtitle detection and extraction from MKV files. Leave empty to use the system PATH."
+msgstr ""
+
+msgctxt "#30067"
+msgid "FFmpeg Executables Folder"
+msgstr ""
+
+msgctxt "#30068"
+msgid "Optional folder containing ffmpeg and ffprobe. Used for embedded subtitle detection and extraction from MP4 files, and for subtitle conversion when needed. Leave empty to use the system PATH."
+msgstr ""
+
+msgctxt "#30071"
+msgid "Enable Translation Service"
+msgstr ""
+
+msgctxt "#30072"
+msgid "Turns the Translatarr background service on or off without disabling the add-on in Kodi. When off, subtitle polling and translation stay paused until you enable it again."
+msgstr ""
+
+msgctxt "#30073"
+msgid "Force Extraction"
+msgstr ""
+
+msgctxt "#30074"
+msgid "Extract and translate from the source embedded subtitle even when a target-language embedded subtitle already exists. Applies to both Local and Remote extraction. Recommended when the embedded target subtitle is poor AI translation."
+msgstr ""
+
+msgctxt "#30075"
+msgid "Embedded Subtitles"
+msgstr ""
+
+msgctxt "#30076"
+msgid "Translatarr Remote Extractor"
+msgstr ""
+
+msgctxt "#30077"
+msgid "Enable Translatarr Remote Extractor"
+msgstr ""
+
+msgctxt "#30078"
+msgid "Allows Translatarr to call Translatarr Remote Extractor, the companion subtitle-extraction service for platforms where local embedded extraction is unavailable or not practical. If local extraction is also enabled, Translatarr tries local extraction first and uses the remote extractor as fallback."
+msgstr ""
+
+msgctxt "#30079"
+msgid "Remote Extractor URL"
+msgstr ""
+
+msgctxt "#30080"
+msgid "Base URL for Translatarr Remote Extractor, for example http://server:8097. Translatarr will call its /probe and /extract endpoints when remote embedded subtitle handling is needed."
+msgstr ""
+
+msgctxt "#30081"
+msgid "Remote Extractor Token"
+msgstr ""
+
+msgctxt "#30082"
+msgid "Optional bearer token for the remote extractor service. Leave empty if the service does not require authentication."
+msgstr ""
+
+msgctxt "#30083"
+msgid "Remote Extractor Timeout"
+msgstr ""
+
+msgctxt "#30084"
+msgid "Maximum number of seconds used for both waiting on the remote extractor response and the real remote probe/extraction commands on the server."
+msgstr ""
+
+msgctxt "#30085"
+msgid "Needs Local or Remote Extractor"
+msgstr ""
+
+msgctxt "#30086"
+msgid "Extraction Method"
 msgstr ""

@@ -1,0 +1,33 @@
+v1.1.3
+- Improved Sonarr context detection for Android and other Kodi skins by handling alternate item type metadata more reliably
+
+v1.1.2
+- Improved Sonarr season handling so selected seasons are monitored correctly and only released missing episodes in that season are searched
+
+v1.1.1
+- Fixed settings persistence after Kodi restart by restoring hidden backing settings for the custom Radarr and Sonarr setup windows
+
+v1.1.0
+- Added Test & Load in the custom Radarr and Sonarr settings windows
+- Root folders can now be auto-filled when only one exists or selected from the instance when multiple are available
+- Quality profiles are now loaded from Radarr and Sonarr and selected by profile name while the addon stores the matching ID automatically
+
+v1.0.7
+- Replaced the old settings flow with a custom Radarr/Sonarr settings UI so connection testing works correctly without reopening settings
+- Added direct Radarr and Sonarr custom settings entry points from addon launch and settings
+- Improved the custom setup dialog with better navigation, clearer actions, footer help text, and visual polish
+
+v1.0.6
+- Added search trigger support in Radarr and Sonarr after sending items to download managers
+- Improved add flow so existing and newly added items can immediately start searching
+
+v1.0.5
+- Added connection test actions for Radarr and Sonarr
+
+v1.0.3
+- UI polish update
+- Added tooltips and improved settings clarity
+
+v1.0.0
+- Initial release
+- Added instant context menu actions for Radarr and Sonarr from Kodi media items

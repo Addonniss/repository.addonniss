@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings version="1">
+    <section id="service.nextonlibrary">
+        <category id="skipintro" label="30012">
+            <group id="skip_intro">
+                <setting id="enable_skip_intro" type="boolean" label="30013" help="30014">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+
+                <setting id="online_intro_metadata_priority" type="boolean" label="30025" help="30026">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_skip_intro">true</dependency>
+                    </dependencies>
+                </setting>
+
+                <setting id="auto_skip_intro" type="boolean" label="30036" help="30037">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_skip_intro">true</dependency>
+                    </dependencies>
+                </setting>
+
+                <setting id="auto_skip_intro_delay" type="integer" label="30038" help="30039">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>0</minimum>
+                        <maximum>10</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>2</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_skip_intro">true</dependency>
+                        <dependency type="enable" setting="auto_skip_intro">true</dependency>
+                    </dependencies>
+                </setting>
+
+                <setting id="enable_skip_intro_fallback" type="boolean" label="30023" help="30024">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_skip_intro">true</dependency>
+                    </dependencies>
+                </setting>
+
+                <setting id="skip_intro_fallback_start" type="string" label="30019" help="30020">
+                    <level>0</level>
+                    <control type="edit" format="string" />
+                    <default>00:15</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_skip_intro">true</dependency>
+                        <dependency type="enable" setting="enable_skip_intro_fallback">true</dependency>
+                    </dependencies>
+                </setting>
+
+                <setting id="skip_intro_fallback_end" type="string" label="30021" help="30022">
+                    <level>0</level>
+                    <control type="edit" format="string" />
+                    <default>01:30</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_skip_intro">true</dependency>
+                        <dependency type="enable" setting="enable_skip_intro_fallback">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
+
+        <category id="nexton" label="30000">
+            <group id="service">
+                <setting id="service_enabled" type="boolean" label="30001" help="30002">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+
+                <setting id="online_next_metadata_priority" type="boolean" label="30027" help="30028">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+
+                <setting id="auto_play_next_episode" type="boolean" label="30032" help="30033">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+
+                <setting id="auto_play_delay" type="integer" label="30034" help="30035">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>0</minimum>
+                        <maximum>20</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>10</default>
+                    <dependencies>
+                        <dependency type="enable" setting="auto_play_next_episode">true</dependency>
+                    </dependencies>
+                </setting>
+
+                <setting id="fallback_trigger_percent" type="integer" label="30005" help="30006">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>50</minimum>
+                        <maximum>99</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>90</default>
+                </setting>
+
+            </group>
+        </category>
+
+        <category id="advanced" label="30029">
+            <group id="advanced_group" label="30029">
+                <setting id="debug_logging" type="boolean" label="30007" help="30008">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+
+                <setting id="contour_color" type="string" label="30040" help="30041">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="30042">blue</option>
+                            <option label="30043">green</option>
+                            <option label="30044">purple</option>
+                            <option label="30045">orange</option>
+                            <option label="30046">pink</option>
+                            <option label="30047">red</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>blue</default>
+                </setting>
+
+                <setting id="show_changelog" type="action" label="30030" help="30031">
+                    <level>0</level>
+                    <control type="button" format="action" />
+                    <data>RunScript(service.nextonlibrary,show_changelog)</data>
+                </setting>
+            </group>
+        </category>
+    </section>
+</settings>

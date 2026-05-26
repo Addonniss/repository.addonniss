@@ -17,7 +17,7 @@
     * TMDB Helper
     * Custom Widgets & Skins
     * Streaming Add-ons
-* 🛠️ **Built-in Connection Testing** – Verify your Radarr and Sonarr settings within the app.
+* 🛠️ **Built-in Test & Load** – Verify your Radarr and Sonarr settings and load root folders plus quality profiles directly from the instance.
 * 🪶 **Lightweight** – Minimal dependencies for a fast experience.
 
 ---
@@ -43,15 +43,25 @@
 
 ## ⚙️ Setup
 
-Open the add-on settings to configure your connections:
+Open the add-on and choose **Radarr Settings** or **Sonarr Settings** to configure your connection in the custom setup window:
 
 | Service | Required Settings |
 | :--- | :--- |
-| **Radarr** 🎬 | URL, API Key, Root Folder, Quality Profile ID |
-| **Sonarr** 📺 | URL, API Key, Root Folder, Quality Profile ID |
+| **Radarr** 🎬 | URL, API Key |
+| **Sonarr** 📺 | URL, API Key |
 
 > [!TIP]
-> Use the **Test Connection** button in settings to ensure Kodi can communicate with your servers.
+> Use **Test & Load** to verify the connection, fetch root folders from the instance, and choose quality profiles by name.
+
+### What Test & Load does
+1. Saves the current URL and API key
+2. Tests the connection to Radarr or Sonarr
+3. Loads available root folders from the instance
+4. Loads available quality profiles from the instance
+5. Auto-fills the root folder if only one exists, or asks you to choose when multiple are available
+
+> [!NOTE]
+> The addon stores the selected quality profile using the real numeric profile ID, even though you choose it by profile name in the custom window.
 
 ---
 
@@ -74,6 +84,7 @@ Open the add-on settings to configure your connections:
 ### **Works With**
 * ✅ Kodi 20 (Nexus)
 * ✅ Kodi 21 (Omega)
+* ✅ Kodi 22 (ALPHA 3)
 * ✅ Windows, Android / Android TV, Linux, CoreELEC / LibreELEC
 
 ### **Dependencies**
@@ -88,7 +99,7 @@ Open the add-on settings to configure your connections:
 If the context menu does not trigger an action:
 1. **Enable Debug Logging** in Kodi settings.
 2. Check the Kodi log file: `.kodi/temp/kodi.log`
-3. **Verify Credentials:** Double-check your API key and ensure the Root Folder path matches what is in Radarr/Sonarr.
+3. **Verify Credentials:** Double-check your API key and rerun **Test & Load** to refresh root folders and quality profiles from Radarr/Sonarr.
 
 ---
 

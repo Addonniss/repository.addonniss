@@ -38,11 +38,11 @@ msgid "Numeric quality profile ID used when adding movies."
 msgstr ""
 
 msgctxt "#30009"
-msgid "Test Radarr Connection"
+msgid "Save & Test Radarr Connection"
 msgstr ""
 
 msgctxt "#30010"
-msgid "Checks whether the Radarr URL and API key are valid."
+msgid "Save settings first, then use this button to verify the saved Radarr URL and API key and load root folders and quality profiles."
 msgstr ""
 
 msgctxt "#30011"
@@ -82,9 +82,41 @@ msgid "Numeric quality profile ID used when adding series."
 msgstr ""
 
 msgctxt "#30020"
-msgid "Test Sonarr Connection"
+msgid "Save & Test Sonarr Connection"
 msgstr ""
 
 msgctxt "#30021"
-msgid "Checks whether the Sonarr URL and API key are valid."
+msgid "Save settings first, then use this button to verify the saved Sonarr URL and API key and load root folders and quality profiles."
+msgstr ""
+
+msgctxt "#30022"
+msgid "KodiARR Instant"
+msgstr ""
+
+msgctxt "#30023"
+msgid "Custom Settings"
+msgstr ""
+
+msgctxt "#30024"
+msgid "Open Radarr Settings"
+msgstr ""
+
+msgctxt "#30025"
+msgid "Open the custom Radarr settings page with live save, test, and inline help."
+msgstr ""
+
+msgctxt "#30026"
+msgid "Open Sonarr Settings"
+msgstr ""
+
+msgctxt "#30027"
+msgid "Open the custom Sonarr settings page with live save, test, and inline help."
+msgstr ""
+
+msgctxt "#30028"
+msgid "View Change Log"
+msgstr ""
+
+msgctxt "#30029"
+msgid "Open the addon change log viewer."
 msgstr ""

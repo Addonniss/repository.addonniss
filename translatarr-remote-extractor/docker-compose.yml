@@ -1,0 +1,15 @@
+services:
+  translatarr-remote-extractor:
+    image: ghcr.io/addonniss/translatarr-remote-extractor:latest
+    container_name: translatarr-remote-extractor
+    ports:
+      - "8097:8097"
+    environment:
+      EXTRACTOR_API_TOKEN: "CHANGE_ME"
+      EXTRACTOR_CACHE_DIR: "/cache"
+      EXTRACTOR_WORK_DIR: "/work"
+      EXTRACTOR_PATH_MAPS: "[]"
+    volumes:
+      - ./cache:/cache
+      - ./work:/work
+    restart: unless-stopped

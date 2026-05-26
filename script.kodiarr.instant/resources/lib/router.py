@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 import xbmc
+import xbmcaddon
+import xbmcgui
+import xbmcvfs
 
 from . import radarr, sonarr
 from .common import log, notify
@@ -14,6 +18,12 @@ def _get_action():
         return "test_radarr"
     if "action=test_sonarr" in argv_text:
         return "test_sonarr"
+    if "action=open_radarr_settings" in argv_text:
+        return "open_radarr_settings"
+    if "action=open_sonarr_settings" in argv_text:
+        return "open_sonarr_settings"
+    if "action=show_changelog" in argv_text:
+        return "show_changelog"
 
     if "radarr" in argv:
         return "radarr"
@@ -39,6 +49,35 @@ def run():
 
     if action == "test_sonarr":
         sonarr.test_connection(show_notification=True)
+        return
+
+    if action == "open_radarr_settings":
+        from .config_flow import open_radarr_settings
+        open_radarr_settings()
+        return
+
+    if action == "open_sonarr_settings":
+        from .config_flow import open_sonarr_settings
+        open_sonarr_settings()
+        return
+
+    if action == "show_changelog":
+        addon = xbmcaddon.Addon("script.kodiarr.instant")
+        changelog_path = os.path.join(addon.getAddonInfo("path"), "changelog.txt")
+
+        if xbmcvfs.exists(changelog_path):
+            changelog_file = xbmcvfs.File(changelog_path)
+            content = changelog_file.read()
+            changelog_file.close()
+            if isinstance(content, bytes):
+                content = content.decode("utf-8", errors="replace")
+        else:
+            content = "No changelog available."
+
+        xbmcgui.Dialog().textviewer(
+            "{} - Change Log".format(addon.getAddonInfo("name")),
+            content,
+        )
         return
 
     if action == "radarr":

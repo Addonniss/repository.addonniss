@@ -1,49 +1,36 @@
-# 🚀 Addonniss Kodi Repository 
+# Addonniss Kodi Repository
 
-Welcome to the official **Addonniss Repository**! This repository hosts AI-powered tools and services for Kodi, including **Translatarr**.
+This repository hosts the Kodi add-ons published by Addonniss, plus the companion service used by Translatarr for remote embedded subtitle extraction.
 
----
+## What’s Included
 
-## 📥 How to Install
+| Add-on | Type | What it does | Docs |
+| --- | --- | --- | --- |
+| **Translatarr** (`service.translatarr`) | Kodi service | Detects subtitles during playback, translates them into your selected target language, writes a translated `.srt`, and switches playback automatically. Supports Gemini, OpenAI, DeepL Free, and LibreTranslate, plus optional dual-language display, SDH/HI cue removal, embedded subtitle extraction, and the remote extractor companion service. | [README](service.translatarr/README.md) · [Changelog](service.translatarr/changelog.txt) |
+| **Skip.Intro.Next (S.I.N.)** (`service.nextonlibrary`) | Kodi service | Adds two lightweight playback helpers for TV episodes: `Skip Intro` and `Next On`. It can use online metadata from TheIntroDB and IntroDB.app, local chapter markers, a manual fallback intro window, and a fallback percentage trigger for the next-episode prompt. | [README](service.nextonlibrary/README.md) · [Changelog](service.nextonlibrary/changelog.txt) |
+| **KodiARR Instant** (`script.kodiarr.instant`) | Kodi script | Adds context menu actions for sending movies to Radarr and TV shows, seasons, or episodes to Sonarr. Includes instant context menu entries, connection test actions, add-and-search flows, and a custom settings UI for quick setup. | [README](script.kodiarr.instant/README.md) · [Changelog](script.kodiarr.instant/changelog.txt) |
+| **Translatarr Remote Extractor** (`translatarr-remote-extractor`) | Companion service | Docker-first companion service for `service.translatarr` that provides remote embedded subtitle extraction, `/health`, `/probe`, and `/extract` endpoints, bearer-token authentication, and path mapping for `smb://`, UNC, and `dav://` playback paths. | [README](translatarr-remote-extractor/README.md) · [Changelog](translatarr-remote-extractor/CHANGELOG.md) |
 
-### 1. Download the Repository
-Add repo as source in File Manager; `https://addonniss.github.io/repository.addonniss/zips/repository.addonniss/`
+## Install
 
-OR
+1. Add the repository as a source in Kodi's File Manager:
 
-Click the link below to download the latest repository zip file to your device:
+   `https://addonniss.github.io/repository.addonniss/zips/repository.addonniss/`
 
-👉 **[Download Addonniss Repo v1.0.1](https://addonniss.github.io/repository.addonniss/zips/repository.addonniss/repository.addonniss-1.0.1.zip)**
+2. Or install the current repository zip directly from GitHub Pages:
 
----
+   `https://addonniss.github.io/repository.addonniss/zips/repository.addonniss/repository.addonniss-1.0.1.zip`
 
-### 2. Install inside Kodi
-1. Open **Kodi**.
-2. Go to **Settings** (Gear Icon) > **System** > **Add-ons**.
-3. Enable **Unknown sources** (if not already on).
-4. Go back to the **Add-ons** menu and click the **Box Icon** (Add-on Browser).
-5. Select **Install from zip file**.
-6. Locate and select the `repository.addonniss-1.0.1.zip` file you downloaded or browsing to the source you just added!
-7. Once installed, select **Install from repository**.
-8. Choose **Addonniss Repository** > **Program add-ons** > **Translatarr** > **Install**.
+3. In Kodi, go to `Add-ons` > `Install from zip file`, select the repository zip, then install the add-ons you want from `Install from repository`.
 
----
+## Repository Notes
 
-## 🤖 Automatic Updates
-By installing the repository, your addons will **automatically update** whenever a new version is released. No manual downloading is required after the initial setup!
+- This repo is structured for Kodi repository generation and GitHub Pages publishing.
+- Each add-on is maintained as an independent project.
 
----
 
-## 🛠️ Developer Info
-- **Maintainer:** Addonniss
-- **Core Service:** service.translatarr
-- **Powered by:** GitHub Actions (Automated Build System)
+## Support
 
----
-
-## ☕ Support the Project
-If you enjoy using Translatarr and want to help keep the development going, feel free to support me here:
+If you enjoy the project and want to support future development, you can donate here:
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/addonniss)
-
----

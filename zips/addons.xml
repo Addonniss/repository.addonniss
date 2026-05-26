@@ -2,7 +2,7 @@
 <addons>
 <addon id="script.kodiarr.instant"
        name="KodiARR Instant"
-       version="1.0.6"
+       version="1.1.3"
        provider-name="Addonniss">
 
     <requires>
@@ -50,12 +50,30 @@
         <license>MIT</license>
 		<assets>
             <icon>icon.png</icon>
-            <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
 
 </addon>
-<addon id="service.translatarr" name="Translatarr" version="2.3.11" provider-name="Addonniss">
+<addon id="service.nextonlibrary" name="Skip.Intro.Next" version="1.0.4" provider-name="Addonniss">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.service" library="service.py" start="login"/>
+    <extension point="xbmc.python.script" library="launcher.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="kodi.addon.metadata">
+        <summary lang="en_GB">Skip intros and show the next-episode prompt with online metadata or chapter timing.</summary>
+        <description lang="en_GB">Adds two lightweight playback helpers to Kodi: Skip Intro and Next On. The add-on can use online metadata from TheIntroDB and IntroDB.app, fall back to local chapter markers when needed, and optionally use manual timing settings for intro skipping. It keeps the on-screen experience minimal with simple overlay buttons.</description>
+        <platform>all</platform>
+        <license>GPL-2.0-only</license>
+        <assets>
+            <icon>icon.png</icon>
+            <fanart>fanart.jpg</fanart>
+        </assets>
+    </extension>
+</addon>
+<addon id="service.translatarr" name="Translatarr" version="2.5.1" provider-name="Addonniss">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.requests" version="2.25.1"/>
@@ -65,8 +83,8 @@
         <provides>executable</provides>
     </extension>
     <extension point="kodi.addon.metadata">
-        <summary lang="en_GB">AI-Powered Subtitle Translator using Google Gemini or OpenAi</summary>
-        <description lang="en_GB">Automatically detects and translates movie subtitles into your preferred language using the Gemini/OpenAI preffered model. Features smart media matching and English-priority source selection.</description>
+        <summary lang="en_GB">Subtitle Translator using Gemini, OpenAI, Anthropic Claude, DeepL Free, or LibreTranslate</summary>
+        <description lang="en_GB">Automatically detects and translates movie subtitles into your preferred language using Gemini, OpenAI, Anthropic Claude, DeepL Free machine translation, or LibreTranslate. LibreTranslate adds a free self-hosted offline or home-network translation option, giving users more privacy, LAN-speed access, and independence from paid cloud APIs.</description>
         <platform>all</platform>
         <license>GPL-2.0-only</license>
         <assets>

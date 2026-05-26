@@ -1,10 +1,46 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings version="1">
     <section id="service.translatarr">
-
         <category id="subtitles" label="30000">
             <group id="1" label="30000">
+                <setting id="service_enabled" type="boolean" label="30071" help="30072">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+                <setting id="require_translation_confirmation" type="boolean" label="30091" help="30092">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+                <setting id="translation_confirmation_delay" type="integer" label="30094" help="30095">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>0</minimum>
+                        <step>1</step>
+                        <maximum>60</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>2</default>
+                    <dependencies>
+                        <dependency type="visible" setting="require_translation_confirmation">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="translation_confirmation_reminder_delay" type="integer" label="30099" help="30100">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>2</minimum>
+                        <step>1</step>
+                        <maximum>120</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>60</default>
+                    <dependencies>
+                        <dependency type="visible" setting="require_translation_confirmation">true</dependency>
+                    </dependencies>
+                </setting>
                 <setting id="translation_mode" type="string" label="30039" help="30040">
+                    <level>0</level>
                     <constraints>
                         <options>
                             <option label="30041">Auto</option>
@@ -14,86 +50,94 @@
                     <control type="list" format="string" />
                     <default>Auto</default>
                 </setting>
-
                 <setting id="auto_info" type="action" label="30043">
+                    <level>0</level>
                     <control type="button" format="action" />
                     <dependencies>
                         <dependency type="visible" setting="translation_mode">Auto</dependency>
                     </dependencies>
                 </setting>
-
                 <setting id="manual_info" type="action" label="30044">
+                    <level>0</level>
                     <control type="button" format="action" />
                     <dependencies>
                         <dependency type="visible" setting="translation_mode">Manual</dependency>
                     </dependencies>
                 </setting>
-
                 <setting id="sub_folder" type="path" label="30003" help="30004">
-                    <constraints><writable>true</writable></constraints>
+                    <level>0</level>
+                    <constraints>
+                        <writable>true</writable>
+                    </constraints>
                     <control type="button" format="path" />
                     <default>/storage/emulated/0/Download/</default>
                     <dependencies>
                         <dependency type="visible" setting="translation_mode">Manual</dependency>
                     </dependencies>
                 </setting>
-
-                <setting type="lsep" label="" />
-
-                <setting id="live_translation" type="boolean" label="30005" help="30006">
-                    <control type="toggle" />
-                    <default>true</default>
-                </setting>
             </group>
         </category>
-
         <category id="ai_engine" label="30007">
             <group id="2" label="30007">
                 <setting id="provider" type="string" label="30008" help="30009">
+                    <level>0</level>
                     <constraints>
                         <options>
                             <option label="Gemini">Gemini</option>
                             <option label="OpenAI">OpenAI</option>
+                            <option label="Anthropic">Anthropic</option>
+                            <option label="DeepL Free">DeepL</option>
+                            <option label="LibreTranslate">LibreTranslate</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
                     <default>Gemini</default>
                 </setting>
-
                 <setting id="api_key" type="string" label="30010" help="30011">
-                    <constraints><allowempty>true</allowempty></constraints>
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
                     <control type="edit" format="string" />
                     <default />
                     <dependencies>
                         <dependency type="visible" setting="provider">Gemini</dependency>
                     </dependencies>
                 </setting>
-
                 <setting id="model" type="string" label="30012" help="30013">
+                    <level>0</level>
                     <constraints>
                         <options>
-                            <option label="Gemini 2.0 Flash">Gemini 2.0 Flash</option>
-                            <option label="Gemini 1.5 Flash">Gemini 1.5 Flash</option>
+                            <option label="Gemini 3.5 Flash">Gemini 3.5 Flash</option>
+                            <option label="Gemini 3.1 Flash-Lite">Gemini 3.1 Flash-Lite</option>
+                            <option label="Fast Mode - Gemini 3.1 Flash-Lite">Fast Mode - Gemini 3.1 Flash-Lite</option>
+                            <option label="Gemini 2.5 Pro">Gemini 2.5 Pro</option>
                             <option label="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
+                            <option label="Fast Mode - Gemini 2.5 Flash">Fast Mode - Gemini 2.5 Flash</option>
+                            <option label="Gemini 2.5 Flash-Lite">Gemini 2.5 Flash-Lite</option>
+                            <option label="Gemini 2.0 Flash (Legacy)">Gemini 2.0 Flash (Legacy)</option>
+                            <option label="Gemini 1.5 Flash (Legacy)">Gemini 1.5 Flash (Legacy)</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
-                    <default>Gemini 2.0 Flash</default>
+                    <default>Gemini 2.5 Flash</default>
                     <dependencies>
                         <dependency type="visible" setting="provider">Gemini</dependency>
                     </dependencies>
                 </setting>
-
                 <setting id="openai_api_key" type="string" label="30034" help="30035">
-                    <constraints><allowempty>true</allowempty></constraints>
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
                     <control type="edit" format="string" />
                     <default />
                     <dependencies>
                         <dependency type="visible" setting="provider">OpenAI</dependency>
                     </dependencies>
                 </setting>
-
                 <setting id="openai_model" type="string" label="30036" help="30037">
+                    <level>0</level>
                     <constraints>
                         <options>
                             <option label="gpt-4o-mini">gpt-4o-mini</option>
@@ -107,15 +151,119 @@
                         <dependency type="visible" setting="provider">OpenAI</dependency>
                     </dependencies>
                 </setting>
+                <setting id="anthropic_api_key" type="string" label="30087" help="30088">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Anthropic</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="anthropic_model" type="string" label="30089" help="30090">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Claude Haiku 4.5">Claude Haiku</option>
+                            <option label="Claude Sonnet 4.6">Claude Sonnet</option>
+                            <option label="Claude Opus 4.7">Claude Opus</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>Claude Haiku</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Anthropic</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="deepl_api_key" type="string" label="30045" help="30046">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="provider">DeepL</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="libretranslate_url" type="string" label="30051" help="30052">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="provider">LibreTranslate</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="libretranslate_api_key" type="string" label="30053" help="30054">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="provider">LibreTranslate</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="temp_gemini" type="string" label="30032" help="30033">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>false</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default>0.15</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Gemini</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="temp_openai" type="string" label="30032" help="30033">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>false</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default>0.15</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">OpenAI</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="temp_anthropic" type="string" label="30032" help="30033">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>false</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default>0.15</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Anthropic</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="chunk_size" type="integer" label="30019" help="30020">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>10</minimum>
+                        <step>10</step>
+                        <maximum>150</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>50</default>
+                </setting>
             </group>
         </category>
-
-		<category id="tuning" label="30014">
+        <category id="tuning" label="30014">
             <group id="3">
                 <setting id="source_lang" type="string" label="30015" help="30016">
+                    <level>0</level>
                     <constraints>
                         <options>
                             <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
                             <option label="Catalan">Catalan</option>
                             <option label="Chinese">Chinese</option>
                             <option label="Croatian">Croatian</option>
@@ -123,6 +271,7 @@
                             <option label="Danish">Danish</option>
                             <option label="Dutch">Dutch</option>
                             <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
                             <option label="Finnish">Finnish</option>
                             <option label="French">French</option>
                             <option label="German">German</option>
@@ -130,30 +279,42 @@
                             <option label="Hebrew">Hebrew</option>
                             <option label="Hindi">Hindi</option>
                             <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
                             <option label="Italian">Italian</option>
                             <option label="Japanese">Japanese</option>
                             <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
                             <option label="Norwegian">Norwegian</option>
                             <option label="Polish">Polish</option>
                             <option label="Portuguese">Portuguese</option>
                             <option label="Romanian">Romanian</option>
                             <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
                             <option label="Slovenian">Slovenian</option>
                             <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
                             <option label="Swedish">Swedish</option>
                             <option label="Thai">Thai</option>
                             <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
                             <option label="Vietnamese">Vietnamese</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
                     <default>English</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Gemini</dependency>
+                    </dependencies>
                 </setting>
-
                 <setting id="target_lang" type="string" label="30017" help="30018">
+                    <level>0</level>
                     <constraints>
                         <options>
                             <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
                             <option label="Catalan">Catalan</option>
                             <option label="Chinese">Chinese</option>
                             <option label="Croatian">Croatian</option>
@@ -161,6 +322,7 @@
                             <option label="Danish">Danish</option>
                             <option label="Dutch">Dutch</option>
                             <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
                             <option label="Finnish">Finnish</option>
                             <option label="French">French</option>
                             <option label="German">German</option>
@@ -168,27 +330,445 @@
                             <option label="Hebrew">Hebrew</option>
                             <option label="Hindi">Hindi</option>
                             <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
                             <option label="Italian">Italian</option>
                             <option label="Japanese">Japanese</option>
                             <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
                             <option label="Norwegian">Norwegian</option>
                             <option label="Polish">Polish</option>
                             <option label="Portuguese">Portuguese</option>
                             <option label="Romanian">Romanian</option>
                             <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
                             <option label="Slovenian">Slovenian</option>
                             <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
                             <option label="Swedish">Swedish</option>
                             <option label="Thai">Thai</option>
                             <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
                             <option label="Vietnamese">Vietnamese</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
                     <default>Romanian</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Gemini</dependency>
+                    </dependencies>
                 </setting>
-
+                <setting id="source_lang_openai" type="string" label="30015" help="30016">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>English</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">OpenAI</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="target_lang_openai" type="string" label="30017" help="30018">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>Romanian</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">OpenAI</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="source_lang_anthropic" type="string" label="30015" help="30016">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>English</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Anthropic</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="target_lang_anthropic" type="string" label="30017" help="30018">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>Romanian</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Anthropic</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="deepl_source_lang" type="string" label="30047" help="30048">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>English</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">DeepL</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="deepl_target_lang" type="string" label="30049" help="30050">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>Romanian</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">DeepL</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="libre_source_lang" type="string" label="30055" help="30056">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>English</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">LibreTranslate</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="libre_target_lang" type="string" label="30057" help="30058">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Arabic">Arabic</option>
+                            <option label="Bengali">Bengali</option>
+                            <option label="Bulgarian">Bulgarian</option>
+                            <option label="Catalan">Catalan</option>
+                            <option label="Chinese">Chinese</option>
+                            <option label="Croatian">Croatian</option>
+                            <option label="Czech">Czech</option>
+                            <option label="Danish">Danish</option>
+                            <option label="Dutch">Dutch</option>
+                            <option label="English">English</option>
+                            <option label="Estonian">Estonian</option>
+                            <option label="Finnish">Finnish</option>
+                            <option label="French">French</option>
+                            <option label="German">German</option>
+                            <option label="Greek">Greek</option>
+                            <option label="Hebrew">Hebrew</option>
+                            <option label="Hindi">Hindi</option>
+                            <option label="Hungarian">Hungarian</option>
+                            <option label="Indonesian">Indonesian</option>
+                            <option label="Italian">Italian</option>
+                            <option label="Japanese">Japanese</option>
+                            <option label="Korean">Korean</option>
+                            <option label="Latvian">Latvian</option>
+                            <option label="Lithuanian">Lithuanian</option>
+                            <option label="Norwegian">Norwegian</option>
+                            <option label="Polish">Polish</option>
+                            <option label="Portuguese">Portuguese</option>
+                            <option label="Romanian">Romanian</option>
+                            <option label="Russian">Russian</option>
+                            <option label="Serbian">Serbian</option>
+                            <option label="Slovak">Slovak</option>
+                            <option label="Slovenian">Slovenian</option>
+                            <option label="Spanish">Spanish</option>
+                            <option label="Swahili">Swahili</option>
+                            <option label="Swedish">Swedish</option>
+                            <option label="Thai">Thai</option>
+                            <option label="Turkish">Turkish</option>
+                            <option label="Ukrainian">Ukrainian</option>
+                            <option label="Vietnamese">Vietnamese</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>Romanian</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">LibreTranslate</dependency>
+                    </dependencies>
+                </setting>
                 <setting id="translation_style" type="string" label="30030" help="30031">
+                    <level>0</level>
                     <constraints>
                         <options>
                             <option label="Family-Friendly">Family-Friendly</option>
@@ -199,41 +779,122 @@
                     <control type="list" format="string" />
                     <default>Natural</default>
                 </setting>
-
-                <setting id="temp" type="string" label="30032" help="30033">
-                    <constraints><allowempty>false</allowempty></constraints>
-                    <control type="edit" format="string" />
-                    <default>0.15</default>
+                <setting id="remove_sdh_hi_cues" type="boolean" label="30059" help="30060">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
                 </setting>
-
-                <setting id="chunk_size" type="integer" label="30019" help="30020">
-                    <constraints><minimum>10</minimum><step>10</step><maximum>150</maximum></constraints>
-                    <control type="edit" format="integer" />
-                    <default>50</default>
+                <setting id="dual_language_display" type="boolean" label="30061" help="30062">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
                 </setting>
             </group>
         </category>
-
+        <category id="embedded_subtitles" label="30075">
+            <group id="embedded_behavior" label="30085">
+                <setting id="force_embedded_source_extraction" type="boolean" label="30073" help="30074">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+            </group>
+            <group id="embedded_subtitles" label="30086">
+                <setting id="enable_embedded_subtitle_extraction" type="boolean" label="30063" help="30064">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+                <setting id="mkvtoolnix_folder" type="path" label="30065" help="30066">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                        <writable>false</writable>
+                    </constraints>
+                    <control type="button" format="path" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="enable_embedded_subtitle_extraction">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="ffmpeg_folder" type="path" label="30067" help="30068">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                        <writable>false</writable>
+                    </constraints>
+                    <control type="button" format="path" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="enable_embedded_subtitle_extraction">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+            <group id="remote_extractor">
+                <setting id="remote_extractor_enabled" type="boolean" label="30077" help="30078">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+                <setting id="remote_extractor_url" type="string" label="30079" help="30080">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="remote_extractor_token" type="string" label="30081" help="30082">
+                    <level>0</level>
+                    <constraints>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="edit" format="string" />
+                    <default />
+                    <dependencies>
+                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="remote_extractor_timeout" type="integer" label="30083" help="30084">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>10</minimum>
+                        <maximum>600</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>480</default>
+                    <dependencies>
+                        <dependency type="visible" setting="remote_extractor_enabled">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
         <category id="advanced" label="30021">
             <group id="4" label="30021">
                 <setting id="show_stats" type="boolean" label="30022" help="30023">
+                    <level>0</level>
                     <control type="toggle" />
                     <default>true</default>
                 </setting>
                 <setting id="notify_mode" type="boolean" label="30024" help="30025">
+                    <level>0</level>
                     <control type="toggle" />
                     <default>true</default>
                 </setting>
                 <setting id="debug_mode" type="boolean" label="30026" help="30027">
+                    <level>0</level>
                     <control type="toggle" />
                     <default>false</default>
                 </setting>
                 <setting id="show_changelog" type="action" label="30028" help="30029">
+                    <level>0</level>
                     <control type="button" format="action" />
                     <data>RunScript(service.translatarr,show_changelog)</data>
                 </setting>
             </group>
-
         </category>
     </section>
 </settings>

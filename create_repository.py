@@ -3,10 +3,10 @@ import os
 import re
 import hashlib
 import zipfile
-import shutil
 
 PAGES_URL = "https://addonniss.github.io/repository.addonniss/zips"
 REPO_ID = "repository.addonniss"
+ADDON_ZIP_RETENTION_COUNT = 5
 
 
 def get_version(xml_path):
@@ -92,6 +92,23 @@ def zip_addon_folder(addon_id, version, zips_path):
                 z.write(fp, arcname)
 
     print(f"Created addon zip: {zip_path}")
+    prune_old_addon_zips(addon_id, target_dir)
+
+
+def prune_old_addon_zips(addon_id, target_dir):
+    if addon_id == REPO_ID:
+        return
+
+    zip_files = [f for f in os.listdir(target_dir) if f.endswith(".zip")]
+    zip_files = sorted(zip_files, key=version_key, reverse=True)
+
+    for old_zip in zip_files[ADDON_ZIP_RETENTION_COUNT:]:
+        old_zip_path = os.path.join(target_dir, old_zip)
+        try:
+            os.remove(old_zip_path)
+            print(f"Removed old addon zip: {old_zip_path}")
+        except Exception as e:
+            print(f"Warning: failed to remove old zip {old_zip_path}: {e}")
 
 
 def zip_repository_addon(version, zips_path):
@@ -148,10 +165,7 @@ def zip_repository_addon(version, zips_path):
 
 def create_repo():
     zips_path = "zips"
-
-    if os.path.exists(zips_path):
-        shutil.rmtree(zips_path)
-    os.makedirs(zips_path)
+    os.makedirs(zips_path, exist_ok=True)
 
     addon_dirs = find_addon_dirs()
     print("Detected addon folders:", addon_dirs)

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="service.nextonlibrary" name="Skip.Intro.Next" version="1.0.4" provider-name="Addonniss">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.service" library="service.py" start="login"/>
+    <extension point="xbmc.python.script" library="launcher.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="kodi.addon.metadata">
+        <summary lang="en_GB">Skip intros and show the next-episode prompt with online metadata or chapter timing.</summary>
+        <description lang="en_GB">Adds two lightweight playback helpers to Kodi: Skip Intro and Next On. The add-on can use online metadata from TheIntroDB and IntroDB.app, fall back to local chapter markers when needed, and optionally use manual timing settings for intro skipping. It keeps the on-screen experience minimal with simple overlay buttons.</description>
+        <platform>all</platform>
+        <license>GPL-2.0-only</license>
+        <assets>
+            <icon>icon.png</icon>
+            <fanart>fanart.jpg</fanart>
+        </assets>
+    </extension>
+</addon>

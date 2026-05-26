@@ -1,0 +1,190 @@
+msgid ""
+msgstr ""
+
+msgctxt "#30000"
+msgid "Next On"
+msgstr ""
+
+msgctxt "#30001"
+msgid "Enable Next On Service"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Turns the background monitor on or off without disabling the add-on."
+msgstr ""
+
+msgctxt "#30003"
+msgid "Prefer Chapter Trigger"
+msgstr ""
+
+msgctxt "#30004"
+msgid "When chapter markers are available, trigger the prompt at the last usable chapter before the end."
+msgstr ""
+
+msgctxt "#30005"
+msgid "Fallback Trigger Percent"
+msgstr ""
+
+msgctxt "#30006"
+msgid "If no chapter data is available, show the prompt when playback reaches this percentage of the total runtime."
+msgstr ""
+
+msgctxt "#30007"
+msgid "Enable Debug Logging"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Adds extra Kodi log lines to help troubleshoot timing and next-episode detection."
+msgstr ""
+
+msgctxt "#30009"
+msgid "S.I.N."
+msgstr ""
+
+msgctxt "#30010"
+msgid "Play the next library episode?"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Next"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Skip Intro"
+msgstr ""
+
+msgctxt "#30013"
+msgid "Enable Skip Intro Service"
+msgstr ""
+
+msgctxt "#30014"
+msgid "Shows a Skip Intro button when an early chapter boundary looks like the end of an intro or recap."
+msgstr ""
+
+msgctxt "#30015"
+msgid "Intro Max Percent"
+msgstr ""
+
+msgctxt "#30016"
+msgid "Treat an early chapter boundary at or before this percentage of runtime as a Skip Intro target. Maximum: 50."
+msgstr ""
+
+msgctxt "#30017"
+msgid "Skip Intro"
+msgstr ""
+
+msgctxt "#30019"
+msgid "Fallback Intro Start"
+msgstr ""
+
+msgctxt "#30020"
+msgid "If no usable intro chapter is available, show Skip Intro starting at this time (MM:SS)."
+msgstr ""
+
+msgctxt "#30021"
+msgid "Fallback Intro End"
+msgstr ""
+
+msgctxt "#30022"
+msgid "If no usable intro chapter is available, Skip Intro jumps to this time (MM:SS)."
+msgstr ""
+
+msgctxt "#30023"
+msgid "Enable Fallback Intro Window"
+msgstr ""
+
+msgctxt "#30024"
+msgid "When no usable intro chapter is available, use the manual intro start and end times."
+msgstr ""
+
+msgctxt "#30025"
+msgid "Online Metadata Priority"
+msgstr ""
+
+msgctxt "#30026"
+msgid "On: prioritize online intro metadata from TheIntroDB and IntroDB.app, then fall back to local chapters. Off: prioritize local chapters and fall back to those online sources."
+msgstr ""
+
+msgctxt "#30027"
+msgid "Online Metadata Priority"
+msgstr ""
+
+msgctxt "#30028"
+msgid "On: prioritize online Next On metadata from TheIntroDB and IntroDB.app, then fall back to local chapters. Off: prioritize local chapters and fall back to those online sources."
+msgstr ""
+
+msgctxt "#30029"
+msgid "Advanced"
+msgstr ""
+
+msgctxt "#30030"
+msgid "View Changelog"
+msgstr ""
+
+msgctxt "#30031"
+msgid "Open the add-on changelog in a text viewer."
+msgstr ""
+
+msgctxt "#30032"
+msgid "Auto-play Next Episode"
+msgstr ""
+
+msgctxt "#30033"
+msgid "Automatically opens the next library episode after the Next On prompt appears. Select still plays immediately, and other remote or keyboard actions cancel the prompt."
+msgstr ""
+
+msgctxt "#30034"
+msgid "Auto-play Delay"
+msgstr ""
+
+msgctxt "#30035"
+msgid "Seconds to wait before auto-playing the next episode. Use 0 to play instantly. Maximum: 20."
+msgstr ""
+
+msgctxt "#30036"
+msgid "Auto-skip Intro"
+msgstr ""
+
+msgctxt "#30037"
+msgid "Automatically skips to the intro end after the Skip Intro prompt appears. Select still skips immediately, and other remote or keyboard actions cancel the prompt."
+msgstr ""
+
+msgctxt "#30038"
+msgid "Auto-skip Delay"
+msgstr ""
+
+msgctxt "#30039"
+msgid "Seconds to wait before auto-skipping the intro. Use 0 to skip instantly. Maximum: 10."
+msgstr ""
+
+msgctxt "#30040"
+msgid "Contour Color"
+msgstr ""
+
+msgctxt "#30041"
+msgid "Choose the color used by the countdown contour around the overlay button."
+msgstr ""
+
+msgctxt "#30042"
+msgid "Blue"
+msgstr ""
+
+msgctxt "#30043"
+msgid "Green"
+msgstr ""
+
+msgctxt "#30044"
+msgid "Purple"
+msgstr ""
+
+msgctxt "#30045"
+msgid "Orange"
+msgstr ""
+
+msgctxt "#30046"
+msgid "Pink"
+msgstr ""
+
+msgctxt "#30047"
+msgid "Red"
+msgstr ""

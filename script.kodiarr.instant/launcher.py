@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import sys
-import xbmcaddon
 
 def _has_action():
     argv_text = " ".join([str(x) for x in sys.argv]).lower()
@@ -11,4 +10,5 @@ if __name__ == "__main__":
         from resources.lib.router import run
         run()
     else:
-        xbmcaddon.Addon("script.kodiarr.instant").openSettings()
+        from resources.lib.config_flow import show_launcher_menu
+        show_launcher_menu()

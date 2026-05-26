@@ -1,3 +1,133 @@
+v2.5.1
+- Added Remind and Skip playback overlay buttons
+- Added a configurable reminder delay so Back, navigation, and the reminder button hide the prompt temporarily instead of skipping the current subtitle candidate
+
+v2.5.0
+- Added optional Translation Confirmation (ALPHA) so Translatarr can load a detected source subtitle first and wait for user approval before starting translation
+- Added a playback overlay button for approving source-subtitle translation in Auto and Manual modes, helping avoid wasted translation on subtitles that are out of sync
+- Added a configurable confirmation delay so users can choose how long to review the loaded source subtitle before the confirmation prompt takes focus
+- Preserved target-language subtitle detection and embedded-source extraction behavior so existing target subtitles and intentional embedded extraction flows continue to skip confirmation
+
+v2.4.17
+- Added Gemini 3.5 Flash, Gemini 3.1 Flash-Lite, and Fast Mode - Gemini 3.1 Flash-Lite to the Gemini model selection
+- Refined the Kodi settings layout so Embedded Subtitles now sits between Translation and Advanced, and Dual-Language Display now appears after SDH/HI cue removal in the Translation group
+
+v2.4.16
+- Fixed OpenAI GPT-5 mini translations failing immediately because the API rejects custom temperature values for that model
+- GPT-5 mini now uses OpenAI's accepted default generation settings, with no custom effort or verbosity requested by Translatarr
+
+v2.4.15
+- Added Anthropic Claude as a new AI provider with Claude Haiku 4.5, Claude Sonnet 4.6, and Claude Opus 4.7 model options
+- Expanded Gemini model selection with Gemini 2.5 Pro and Gemini 2.5 Flash-Lite, while keeping Gemini 2.5 Flash as the default and Fast Mode - Gemini 2.5 Flash as a separate UX-oriented option
+
+v2.4.14
+- Fixed Kodi settings visibility so Translatarr settings are available consistently at Basic level
+
+v2.4.13
+- Embedded subtitle extraction now skips streamed sources that do not expose a real file path, instead of attempting remote extractor probe/extract calls on transient `plugin://`, `http://`, or `https://` playback URLs
+- Added a user-facing notification when embedded extraction is unavailable because playback does not expose a real file path
+
+v2.4.12
+- Fixed sidecar subtitle matching to prefer the real playing filename/path instead of `Player.Title`, so existing target-language subtitles next to the video are detected more reliably
+- Auto mode now also uses the real playing filename/path when saving translated subtitles, falling back to `Player.Title` only when no real media path is available
+
+v2.4.11
+- Remote Extractor Timeout now drives both the Kodi-side wait and the real remote probe/extraction commands on the server, removing the previous timeout mismatch
+- Updated Remote Extractor settings text and README guidance so `/probe`, `/extract`, and timeout behavior are documented more clearly
+- Refreshed roadmap and remote-extractor documentation to match the verified production workflow, including `dav://` path mapping and nzbdav / rclone-backed media notes
+
+v2.4.10
+- Improved embedded subtitle extraction workflow with clearer Force Extraction behavior for users who want to retranslate even when an embedded target-language subtitle already exists
+- Manual mode now checks next-to-video subtitles before embedded extraction fallback, so valid sidecar source and target subtitles are reused instead of triggering unnecessary extraction
+- Added better extraction UX with start/failure/timeout notifications and increased the default remote extractor timeout to 8 minutes for slower remote or symlink-backed media
+- Refined embedded extraction settings layout, provider-specific temperature visibility, and remote extractor wording for a clearer Kodi settings experience
+- Reduced repeated debug-log spam from stale subtitle checks while preserving useful per-playback diagnostics
+
+v2.4.9
+- Added first public support for Translatarr Remote Extractor as a companion service for embedded subtitle extraction when local tools are unavailable or impractical
+- Integrated remote embedded extraction into the normal Translatarr subtitle flow so extracted source subtitles are written into the standard Translatarr subtitle folder and continue through normal translation handling
+- Added remote target-language embedded subtitle probing so Translatarr can skip source extraction and translation remotely when the selected target language already exists as an embedded subtitle track
+- Fixed subtitle language classification so target-language files such as `.target-language.sdh.srt` and similar suffix variants are no longer treated as source subtitles
+- Updated embedded extraction settings and wording for clearer local-vs-remote behavior, added user-visible extraction-start notifications, and documented the new Translatarr Remote Extractor workflow in the README
+
+v2.4.8
+- Added a simple service on/off setting so users can pause Translatarr directly from addon settings without enabling or disabling the Kodi addon itself
+- Expanded embedded subtitle extraction to support both MKV and MP4 files, using MKVToolNix tools for MKV and FFmpeg tools for MP4
+- Embedded subtitle fallback now also works in Auto mode and can skip translation entirely when the selected target language already exists as an embedded subtitle
+- Reorganized embedded subtitle options into their own settings group and simplified external tool configuration to MKVToolNix and FFmpeg executable-folder settings
+
+v2.4.7
+- Improved embedded subtitle extraction logging so Manual mode now shows resolved extraction paths, selected tool steps, and explicit timeout failures instead of appearing stuck
+- Added longer network-path extraction timeouts for UNC-backed playback so slow SMB/Windows share extractions have more time to finish
+- Updated README guidance for embedded subtitle extraction with practical SMB/UNC expectations, observed network performance notes, and clearer limitations for network-backed files
+
+v2.4.6
+- Added optional embedded subtitle extraction in Manual mode for local MKV files when no external source subtitle is found yet
+- Embedded extraction now looks for source-language subtitle tracks, prefers non-SDH tracks when available, and writes a standard source `.srt` into the configured manual subtitle folder
+- Added settings for enabling embedded subtitle extraction and optional tool paths for `mkvinfo`, `mkvextract`, and `ffmpeg`
+- Manual mode now allows pre-existing source subtitles to proceed when no matching translated target subtitle exists yet
+- Manual mode now skips stale pre-existing source subtitles only when a matching translated target subtitle for the current video already exists
+
+v2.4.5
+- Expanded language coverage across Gemini, OpenAI, DeepL, and LibreTranslate pickers with Bengali, Bulgarian, Estonian, Indonesian, Latvian, Lithuanian, Serbian, Slovak, Swahili, and Ukrainian
+- Added missing DeepL-supported languages that were previously omitted from the DeepL-specific picker list, including Thai, Vietnamese, Catalan, Croatian, Hebrew, and Hindi
+
+v2.4.4
+- Added optional Dual-Language Display so subtitles can show source text above the translated text
+- Dual-Language Display is disabled by default and lives in the Mode group as an additive viewing option
+
+v2.4.3
+- Added optional SDH/HI cue removal to strip common hearing-impaired subtitle cues while preserving spoken dialogue
+- Improved SDH/HI cleanup to handle full-line, leading, and trailing cue fragments without breaking multiline subtitle structure
+- Added shared localization guidance for Gemini and OpenAI prompts to improve idioms and gender-aware phrasing
+- Improved DeepL usage statistics fallback so character consumption no longer shows as zero when DeepL omits billed-character details
+- Renamed settings categories for clarity: Mode, Provider, Translation, Advanced
+
+v2.4.2
+- Added LibreTranslate as a free self-hosted translation provider for offline or home-network use
+- LibreTranslate support lets users keep subtitle translation on their own server for more privacy and independence from paid cloud APIs
+- LibreTranslate can be very fast on a local network and gives users another no-cost option alongside DeepL Free
+- Added dedicated LibreTranslate URL, optional API key, and separate source/target language settings
+- Added LibreTranslate setup guidance, including full URL requirement and server language-loading notes
+
+v2.4.1
+- Added DeepL Free machine translation as a very fast provider with 500,000 free characters per month, enough for roughly 9 full movies on average
+- Added provider-aware language selection so DeepL only shows supported languages
+- Fixed DeepL request payload rejection during chunk translation
+- Updated addon metadata and README for DeepL support
+
+v2.4.0
+- Live translation is now always enabled for a faster playback experience
+- Removed the Real-Time Translation toggle from settings
+- Auto mode now reuses translated subtitles from the Translatarr subtitles folder across playback sessions
+
+v2.3.14
+- Fixed auto mode playback session detection for temp subtitle scanning
+- Improved compatibility with reused generic temp subtitle filenames in Kodi temp folders 
+- AKA OPENSUBTITLES overwritting the same tempsubtitle file fixed finally!!! ENJOY!
+- Success statistics popup now shows where the translated subtitle was saved
+
+v2.3.12
+- Auto mode now also detects Kodi Custom subtitle folder when active
+- Auto mode continues to scan next-to-video and temp subtitle locations
+- Auto mode now discovers Kodi temp subfolders dynamically under `special://temp/`
+- Improved detection of provider temp subtitles with generic names like `TempSubtitle.*.srt`
+- Improved handling for UUID-style subtitle filenames in Kodi custom subtitle folders
+- Manual mode now safely falls back to recent-session generic or UUID-style subtitle filenames in the configured folder
+- Manual mode still prioritizes exact video-name subtitle matches before using the recent-session fallback
+- Reduced false positives from stale reused temp subtitle files across playback sessions
+- Manual mode now reuses the shared subtitle session-age tolerance window
+- Active translation now aborts if the source subtitle file changes mid-job
+- Improved path resolution for plugin playback that exposes real SMB/local paths
+- Reduced Kodi subtitle setting log noise during active polling
+- Subtitle polling now runs only during video playback
+- Gemini 2.5 Flash Fast Mode added
+  * uses Gemini 2.5 Flash with thinking budget disabled
+  * still respects the user-configured temperature
+- Gemini 2.5 Flash is now the default Gemini model for new selections
+- Gemini 2.0 Flash and Gemini 1.5 Flash are now marked as legacy in settings
+- Preserved compatibility with existing saved Gemini model selections
+
 v2.3.9
 - Major stability improvements for Real-Debrid / Torbox streams
 - Improved subtitle detection in temp folders

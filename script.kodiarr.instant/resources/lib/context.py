@@ -59,22 +59,35 @@ def find_series_id():
 def get_sonarr_context():
     info = {}
     info["series_id"], info["id_type"] = find_series_id()
+    info["series_title"] = (
+        xbmc.getInfoLabel("ListItem.TVShowTitle")
+        or xbmc.getInfoLabel("ListItem.Title")
+        or xbmc.getInfoLabel("ListItem.Label")
+        or ""
+    ).strip()
+    info["year"] = xbmc.getInfoLabel("ListItem.Year").strip()
 
     raw_season = xbmc.getInfoLabel("ListItem.Season")
     raw_episode = xbmc.getInfoLabel("ListItem.Episode")
     db_type = xbmc.getInfoLabel("ListItem.DBTYPE").lower()
+    item_type = xbmc.getInfoLabel("ListItem.Property(item.type)").lower()
 
-    if db_type == "tvshow":
+    info["db_type"] = db_type
+    info["item_type"] = item_type
+
+    effective_type = db_type or item_type
+
+    if effective_type == "tvshow":
         info["type"] = "tvshow"
         info["season"] = None
         info["episode"] = None
 
-    elif db_type == "season":
+    elif effective_type == "season":
         info["type"] = "season"
         info["season"] = raw_season
         info["episode"] = None
 
-    elif db_type == "episode":
+    elif effective_type == "episode":
         info["type"] = "episode"
         info["season"] = raw_season
         info["episode"] = raw_episode
