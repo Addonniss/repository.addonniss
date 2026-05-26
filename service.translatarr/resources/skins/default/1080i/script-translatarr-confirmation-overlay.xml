@@ -25,9 +25,9 @@
                 <align>center</align>
                 <aligny>center</aligny>
                 <texturefocus border="30" colordiffuse="FFFFFFFF">button.png</texturefocus>
-                <texturenofocus border="30" colordiffuse="FFFFFFFF">button.png</texturenofocus>
+                <texturenofocus border="30" colordiffuse="FFE3E3E3">button.png</texturenofocus>
                 <alttexturefocus border="30" colordiffuse="FFFFFFFF">button.png</alttexturefocus>
-                <alttexturenofocus border="30" colordiffuse="FFFFFFFF">button.png</alttexturenofocus>
+                <alttexturenofocus border="30" colordiffuse="FFE3E3E3">button.png</alttexturenofocus>
                 <pulseonselect>no</pulseonselect>
                 <onright>3013</onright>
                 <onleft>3015</onleft>
@@ -46,9 +46,9 @@
                 <align>center</align>
                 <aligny>center</aligny>
                 <texturefocus border="30" colordiffuse="FFFFFFFF">button.png</texturefocus>
-                <texturenofocus border="30" colordiffuse="FFFFFFFF">button.png</texturenofocus>
+                <texturenofocus border="30" colordiffuse="FFE3E3E3">button.png</texturenofocus>
                 <alttexturefocus border="30" colordiffuse="FFFFFFFF">button.png</alttexturefocus>
-                <alttexturenofocus border="30" colordiffuse="FFFFFFFF">button.png</alttexturenofocus>
+                <alttexturenofocus border="30" colordiffuse="FFE3E3E3">button.png</alttexturenofocus>
                 <pulseonselect>no</pulseonselect>
                 <onright>3015</onright>
                 <onleft>3012</onleft>
@@ -67,9 +67,9 @@
                 <align>center</align>
                 <aligny>center</aligny>
                 <texturefocus border="30" colordiffuse="FFFFFFFF">button.png</texturefocus>
-                <texturenofocus border="30" colordiffuse="FFFFFFFF">button.png</texturenofocus>
+                <texturenofocus border="30" colordiffuse="FFE3E3E3">button.png</texturenofocus>
                 <alttexturefocus border="30" colordiffuse="FFFFFFFF">button.png</alttexturefocus>
-                <alttexturenofocus border="30" colordiffuse="FFFFFFFF">button.png</alttexturenofocus>
+                <alttexturenofocus border="30" colordiffuse="FFE3E3E3">button.png</alttexturenofocus>
                 <pulseonselect>no</pulseonselect>
                 <onright>3012</onright>
                 <onleft>3013</onleft>

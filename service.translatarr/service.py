@@ -30,6 +30,10 @@ MAX_CONFIRM_TRANSLATION_DELAY_SECONDS = 60
 DEFAULT_CONFIRM_TRANSLATION_REMINDER_SECONDS = 60
 MIN_CONFIRM_TRANSLATION_REMINDER_SECONDS = 2
 MAX_CONFIRM_TRANSLATION_REMINDER_SECONDS = 120
+ACTION_MOVE_LEFT = 1
+ACTION_MOVE_RIGHT = 2
+ACTION_MOVE_UP = 3
+ACTION_MOVE_DOWN = 4
 ACTION_SELECT_ITEM = 7
 ACTION_PLAYER_STOP = 13
 ACTION_NAV_BACK = 92
@@ -544,6 +548,24 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
         self.service = None
 
+    def _move_focus(self, direction):
+        focus_order = (
+            CONFIRM_TRANSLATION_BUTTON_CONTROL_ID,
+            CONTINUE_TRANSLATION_BUTTON_CONTROL_ID,
+            SKIP_TRANSLATION_BUTTON_CONTROL_ID,
+        )
+        try:
+            focused_id = self.getFocusId()
+            current_index = focus_order.index(focused_id)
+        except (RuntimeError, ValueError):
+            current_index = 1
+
+        next_index = (current_index + direction) % len(focus_order)
+        try:
+            self.setFocusId(focus_order[next_index])
+        except RuntimeError:
+            pass
+
     def onInit(self):  # pylint: disable=invalid-name
         try:
             if self.service:
@@ -581,6 +603,14 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
             if focused_id == SKIP_TRANSLATION_BUTTON_CONTROL_ID:
                 self.service.skip_translation_confirmation()
                 return
+        elif action_id == ACTION_MOVE_LEFT:
+            self._move_focus(-1)
+            return
+        elif action_id == ACTION_MOVE_RIGHT:
+            self._move_focus(1)
+            return
+        elif action_id in (ACTION_MOVE_UP, ACTION_MOVE_DOWN):
+            return
         elif action_id in (
             ACTION_MOUSE_MOVE,
             ACTION_MOUSE_LEFT_CLICK,
@@ -592,8 +622,10 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
         if self.service:
             if action_id == ACTION_PLAYER_STOP:
                 self.service.close_translation_confirmation_overlay()
-            else:
+            elif action_id == ACTION_NAV_BACK:
                 self.service.continue_translation_confirmation(user_initiated=True)
+            else:
+                return
         else:
             self.close()
 
