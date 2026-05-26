@@ -548,24 +548,6 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
         xbmcgui.WindowXMLDialog.__init__(self, *args, **kwargs)
         self.service = None
 
-    def _move_focus(self, direction):
-        focus_order = (
-            CONFIRM_TRANSLATION_BUTTON_CONTROL_ID,
-            CONTINUE_TRANSLATION_BUTTON_CONTROL_ID,
-            SKIP_TRANSLATION_BUTTON_CONTROL_ID,
-        )
-        try:
-            focused_id = self.getFocusId()
-            current_index = focus_order.index(focused_id)
-        except (RuntimeError, ValueError):
-            current_index = 1
-
-        next_index = (current_index + direction) % len(focus_order)
-        try:
-            self.setFocusId(focus_order[next_index])
-        except RuntimeError:
-            pass
-
     def onInit(self):  # pylint: disable=invalid-name
         try:
             if self.service:
@@ -603,11 +585,7 @@ class TranslatarrConfirmationOverlay(xbmcgui.WindowXMLDialog):
             if focused_id == SKIP_TRANSLATION_BUTTON_CONTROL_ID:
                 self.service.skip_translation_confirmation()
                 return
-        elif action_id == ACTION_MOVE_LEFT:
-            self._move_focus(-1)
-            return
-        elif action_id == ACTION_MOVE_RIGHT:
-            self._move_focus(1)
+        elif action_id in (ACTION_MOVE_LEFT, ACTION_MOVE_RIGHT):
             return
         elif action_id in (ACTION_MOVE_UP, ACTION_MOVE_DOWN):
             return

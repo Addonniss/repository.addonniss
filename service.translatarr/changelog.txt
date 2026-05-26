@@ -1,3 +1,7 @@
+v2.5.4
+- Fixed translation confirmation overlay Left/Right navigation jumping two buttons by letting Kodi's native XML navigation handle focus movement once
+- Darkened unfocused translation confirmation buttons further so the currently focused action is easier to see
+
 v2.5.3
 - Fixed translation confirmation overlay remote-control navigation so Left/Right moves between buttons instead of dismissing the prompt
 - Dimmed unfocused translation confirmation buttons so remote-control users can see which action is focused
