@@ -35,7 +35,7 @@ REMOTE_EXTRACTOR_TIMEOUT = int(os.environ.get("REMOTE_EXTRACTOR_TIMEOUT", "900")
 TRANSLATION_PROVIDER = os.environ.get("TRANSLATION_PROVIDER", "none").strip().lower()
 TRANSLATION_STYLE = os.environ.get("TRANSLATION_STYLE", "Gritty / Adult").strip()
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 GEMINI_TEMPERATURE = float(os.environ.get("GEMINI_TEMPERATURE", "0.1"))
 GEMINI_TOP_P = float(os.environ.get("GEMINI_TOP_P", "0.95"))
 GEMINI_FAST_MODE = os.environ.get("GEMINI_FAST_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
@@ -55,8 +55,9 @@ SRT_TIME_RE = re.compile(
 )
 
 MODEL_PRICING = {
-    "gemini-2.5-flash": {"input": 0.075, "output": 0.30, "thought": 0.00},
-    "gemini-2.0-flash": {"input": 0.050, "output": 0.20, "thought": 0.00},
+    "gemini-3.1-flash-lite": {"input": 0.25, "output": 1.50, "thought": 0.00},
+    "gemini-2.5-flash": {"input": 0.30, "output": 2.50, "thought": 0.00},
+    "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40, "thought": 0.00},
 }
 
 TARGET_SIDECAR_TOKENS = {"ro", "ron", "rum", "romanian", "romana"}

@@ -6,9 +6,14 @@
 - Added source SRT validation before saving extracted embedded subtitles or sending them to translation
 - Added `DECISION_MAX_SOURCE_SRT_BYTES`, defaulting to `1048576` bytes, to reject oversized source subtitles before translation
 - Added extracted source cue counts to extraction-complete Discord notifications
+- Added `gemini-3.1-flash-lite` and `gemini-2.5-flash-lite` as supported Gemini decision-service models
+
+### Changed
+- Changed the default Gemini decision-service model from deprecated `gemini-2.0-flash` to `gemini-2.5-flash-lite`
 
 ### Fixed
 - Prevented empty, malformed, binary-looking, or oversized extractor output from being saved as a source sidecar or translated
+- Removed the deprecated `gemini-2.0-flash` decision-service pricing/config references
 
 ## 2026-05-21
 

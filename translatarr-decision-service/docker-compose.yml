@@ -26,7 +26,7 @@ services:
       # LibreTranslate does not support prompt-level style control.
       TRANSLATION_STYLE: "Gritty / Adult"
       GEMINI_API_KEY: "CHANGE_ME"
-      GEMINI_MODEL: "gemini-2.0-flash"
+      GEMINI_MODEL: "gemini-2.5-flash-lite"
       GEMINI_TEMPERATURE: "0.15"
       GEMINI_TOP_P: "0.95"
       # GEMINI_FAST_MODE only applies to gemini-2.5-flash.

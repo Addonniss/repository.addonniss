@@ -130,7 +130,7 @@ services:
       TRANSLATION_STYLE: "Gritty / Adult"
 
       GEMINI_API_KEY: "replace-with-your-key"
-      GEMINI_MODEL: "gemini-2.0-flash"
+      GEMINI_MODEL: "gemini-2.5-flash-lite"
       GEMINI_TEMPERATURE: "0.15"
       GEMINI_TOP_P: "0.95"
       # GEMINI_FAST_MODE only applies to gemini-2.5-flash.
@@ -204,7 +204,8 @@ docker compose up -d --build
 - `GEMINI_API_KEY`
   - required when `TRANSLATION_PROVIDER=gemini`
 - `GEMINI_MODEL`
-  - default: `gemini-2.0-flash`
+  - supported: `gemini-3.1-flash-lite`, `gemini-2.5-flash-lite`, `gemini-2.5-flash`
+  - default: `gemini-2.5-flash-lite`
 - `GEMINI_TEMPERATURE`
   - default: `0.1`
 - `GEMINI_TOP_P`
