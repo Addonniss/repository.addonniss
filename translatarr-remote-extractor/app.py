@@ -14,6 +14,29 @@ app = FastAPI(title="Translatarr Remote Extractor")
 API_TOKEN = os.environ.get("EXTRACTOR_API_TOKEN", "").strip()
 CACHE_DIR = os.environ.get("EXTRACTOR_CACHE_DIR", "/cache").strip()
 WORK_DIR = os.environ.get("EXTRACTOR_WORK_DIR", "/work").strip()
+MAX_EXTRACTED_SRT_BYTES = int(os.environ.get("EXTRACTOR_MAX_EXTRACTED_SRT_BYTES", str(1024 * 1024)))
+SRT_TIME_RE = re.compile(
+    r"^\s*\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}\s*-->\s*"
+    r"\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}"
+)
+TEXT_SUBTITLE_CODEC_TOKENS = (
+    "s_text",
+    "subrip",
+    "utf8",
+    "ass",
+    "ssa",
+    "webvtt",
+    "mov_text",
+    "tx3g",
+)
+IMAGE_SUBTITLE_CODEC_TOKENS = (
+    "pgs",
+    "hdmv",
+    "vobsub",
+    "dvd_subtitle",
+    "dvb_subtitle",
+    "xsub",
+)
 
 # Keep these language tables aligned with service.translatarr/languages.py.
 LANG_NAME_TO_ISO = {
@@ -282,6 +305,25 @@ def score_track(track: Dict[str, Any], wanted_lang: str, prefer_non_sdh: bool) -
     return score
 
 
+def is_text_subtitle_track(track: Dict[str, Any]) -> bool:
+    codec = (track.get("codec_id") or "").lower()
+    if any(token in codec for token in IMAGE_SUBTITLE_CODEC_TOKENS):
+        return False
+    return any(token in codec for token in TEXT_SUBTITLE_CODEC_TOKENS)
+
+
+def is_direct_srt_subtitle_track(track: Dict[str, Any]) -> bool:
+    codec = (track.get("codec_id") or "").lower()
+    if any(token in codec for token in IMAGE_SUBTITLE_CODEC_TOKENS):
+        return False
+    return (
+        "subrip" in codec
+        or "s_text/utf8" in codec
+        or "s_text/ascii" in codec
+        or codec == "srt"
+    )
+
+
 def has_language_match(track: Dict[str, Any], wanted_lang: str) -> bool:
     variants = get_lang_variants(wanted_lang)
     language = (track.get("language") or "").lower()
@@ -315,18 +357,29 @@ def choose_best_track(
     tracks: List[Dict[str, Any]],
     source_lang: str,
     prefer_non_sdh: bool,
-    allow_unlabeled_fallback: bool = False
+    allow_unlabeled_fallback: bool = False,
+    text_only: bool = False,
+    direct_srt_only: bool = False
 ) -> Optional[Dict[str, Any]]:
     if not tracks:
         return None
 
+    if direct_srt_only:
+        candidates = [track for track in tracks if is_direct_srt_subtitle_track(track)]
+    elif text_only:
+        candidates = [track for track in tracks if is_text_subtitle_track(track)]
+    else:
+        candidates = tracks
+    if not candidates:
+        return None
+
     matching_tracks = [
-        track for track in tracks
+        track for track in candidates
         if has_language_match(track, source_lang)
     ]
     if not matching_tracks and allow_unlabeled_fallback:
         unlabeled_tracks = [
-            track for track in tracks
+            track for track in candidates
             if not (track.get("language") or "").strip()
         ]
         if not unlabeled_tracks:
@@ -441,6 +494,81 @@ def get_cache_path(video_path: str, source_lang: str, track_id: int) -> str:
         "{0}|{1}|{2}".format(video_path, normalize_lang(source_lang), track_id).encode("utf-8")
     ).hexdigest()
     return os.path.join(CACHE_DIR, cache_key + ".srt")
+
+
+def parse_srt_blocks(content: str) -> List[Dict[str, Any]]:
+    normalized = content.replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not normalized:
+        return []
+
+    blocks = []
+    for raw_block in re.split(r"\n\s*\n", normalized):
+        lines = [line.rstrip("\ufeff") for line in raw_block.splitlines()]
+        if len(lines) < 2:
+            continue
+
+        time_pos = 1 if lines[0].strip().isdigit() else 0
+        if time_pos >= len(lines) or not SRT_TIME_RE.match(lines[time_pos]):
+            continue
+
+        text_lines = lines[time_pos + 1:]
+        if not any(line.strip() for line in text_lines):
+            continue
+
+        blocks.append({
+            "time": lines[time_pos],
+            "text": "\n".join(text_lines),
+        })
+    return blocks
+
+
+def read_valid_srt_file(path: str) -> tuple:
+    try:
+        size = os.path.getsize(path)
+    except OSError as exc:
+        return False, "", "subtitle file is unreadable: {0}".format(exc)
+
+    if size <= 0:
+        return False, "", "subtitle file is empty"
+    if size > MAX_EXTRACTED_SRT_BYTES:
+        return False, "", "subtitle file is too large for safe translation ({0} bytes)".format(size)
+
+    try:
+        with open(path, "rb") as subtitle_file:
+            raw = subtitle_file.read()
+    except OSError as exc:
+        return False, "", "subtitle file is unreadable: {0}".format(exc)
+
+    if b"\x00" in raw[:4096]:
+        return False, "", "subtitle output looks binary, not SRT text"
+
+    text = None
+    for encoding in ("utf-8-sig", "utf-16", "cp1252"):
+        try:
+            text = raw.decode(encoding)
+            break
+        except UnicodeError:
+            continue
+
+    if text is None:
+        return False, "", "subtitle output is not readable text"
+
+    if not text.strip():
+        return False, "", "subtitle output contains no text"
+
+    control_chars = sum(1 for char in text if ord(char) < 32 and char not in "\r\n\t")
+    if control_chars > max(20, len(text) // 100):
+        return False, "", "subtitle output has too many control characters"
+
+    blocks = parse_srt_blocks(text)
+    if not blocks:
+        return False, "", "subtitle output is not valid SRT"
+
+    text_chars = sum(len(block.get("text") or "") for block in blocks)
+    if text_chars < 20 and len(text) > 1000:
+        return False, "", "subtitle output has no usable subtitle dialogue"
+
+    return True, text, ""
 
 
 def probe_embedded_tracks(video_path: str, language: str, timeout: int, prefer_non_sdh: bool = True) -> ProbeResponse:
@@ -683,7 +811,13 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
             )
 
         tracks = parse_mkvinfo_output(info_result.stdout)
-        selected = choose_best_track(tracks, source_lang, req.prefer_non_sdh, allow_unlabeled_fallback=True)
+        selected = choose_best_track(
+            tracks,
+            source_lang,
+            req.prefer_non_sdh,
+            allow_unlabeled_fallback=True,
+            direct_srt_only=True
+        )
 
         if not tracks:
             return ExtractResponse(
@@ -697,15 +831,25 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
         if not selected:
             return ExtractResponse(
                 ok=False,
-                message="No suitable subtitle track found for language '{0}'".format(source_lang),
+                message="No translation-compatible SRT text subtitle track found for language '{0}'".format(source_lang),
                 all_tracks=tracks,
                 resolved_video_path=resolved_video_path
             )
 
         cache_path = get_cache_path(resolved_video_path, source_lang, selected["mkvextract_id"])
         if os.path.exists(cache_path) and os.path.getsize(cache_path) > 0 and not req.force_reextract:
-            with open(cache_path, "r", encoding="utf-8", errors="ignore") as cached_file:
-                cached_content = cached_file.read()
+            valid, cached_content, validation_error = read_valid_srt_file(cache_path)
+            if not valid:
+                return ExtractResponse(
+                    ok=False,
+                    message="Cached extracted subtitle is not safe for translation: {0}".format(validation_error),
+                    method="cache",
+                    cache_hit=True,
+                    extracted_srt_path=cache_path,
+                    selected_track=selected,
+                    all_tracks=tracks,
+                    resolved_video_path=resolved_video_path
+                )
             return ExtractResponse(
                 ok=True,
                 message="Using cached extracted subtitle",
@@ -762,8 +906,17 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
             )
 
         shutil.copy2(temp_output, cache_path)
-        with open(cache_path, "r", encoding="utf-8", errors="ignore") as subtitle_file:
-            subtitle_text = subtitle_file.read()
+        valid, subtitle_text, validation_error = read_valid_srt_file(cache_path)
+        if not valid:
+            return ExtractResponse(
+                ok=False,
+                message="Extracted subtitle is not safe for translation: {0}".format(validation_error),
+                method="mkvextract",
+                extracted_srt_path=cache_path,
+                selected_track=selected,
+                all_tracks=tracks,
+                resolved_video_path=resolved_video_path
+            )
 
         return ExtractResponse(
             ok=True,
@@ -828,7 +981,7 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
         )
 
     tracks = parse_ffprobe_streams(probe_data.get("streams") or [])
-    selected = choose_best_track(tracks, source_lang, req.prefer_non_sdh, allow_unlabeled_fallback=True)
+    selected = choose_best_track(tracks, source_lang, req.prefer_non_sdh, allow_unlabeled_fallback=True, text_only=True)
 
     if not tracks:
         return ExtractResponse(
@@ -842,7 +995,7 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
     if not selected:
         return ExtractResponse(
             ok=False,
-            message="No suitable subtitle stream found for language '{0}'".format(source_lang),
+            message="No translation-compatible text subtitle stream found for language '{0}'".format(source_lang),
             all_tracks=tracks,
             resolved_video_path=resolved_video_path,
             diagnostic_preview=json.dumps(probe_data.get("streams") or [], ensure_ascii=False)[:4000]
@@ -850,8 +1003,18 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
 
     cache_path = get_cache_path(resolved_video_path, source_lang, selected["track_number"])
     if os.path.exists(cache_path) and os.path.getsize(cache_path) > 0 and not req.force_reextract:
-        with open(cache_path, "r", encoding="utf-8", errors="ignore") as cached_file:
-            cached_content = cached_file.read()
+        valid, cached_content, validation_error = read_valid_srt_file(cache_path)
+        if not valid:
+            return ExtractResponse(
+                ok=False,
+                message="Cached extracted subtitle is not safe for translation: {0}".format(validation_error),
+                method="cache",
+                cache_hit=True,
+                extracted_srt_path=cache_path,
+                selected_track=selected,
+                all_tracks=tracks,
+                resolved_video_path=resolved_video_path
+            )
         return ExtractResponse(
             ok=True,
             message="Using cached extracted subtitle",
@@ -915,8 +1078,17 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
         )
 
     shutil.copy2(temp_output, cache_path)
-    with open(cache_path, "r", encoding="utf-8", errors="ignore") as subtitle_file:
-        subtitle_text = subtitle_file.read()
+    valid, subtitle_text, validation_error = read_valid_srt_file(cache_path)
+    if not valid:
+        return ExtractResponse(
+            ok=False,
+            message="Extracted subtitle is not safe for translation: {0}".format(validation_error),
+            method="ffmpeg",
+            extracted_srt_path=cache_path,
+            selected_track=selected,
+            all_tracks=tracks,
+            resolved_video_path=resolved_video_path
+        )
 
     return ExtractResponse(
         ok=True,

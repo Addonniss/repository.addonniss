@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-02
+
+### Added
+- Added source SRT validation before saving extracted embedded subtitles or sending them to translation
+- Added `DECISION_MAX_SOURCE_SRT_BYTES`, defaulting to `1048576` bytes, to reject oversized source subtitles before translation
+- Added extracted source cue counts to extraction-complete Discord notifications
+
+### Fixed
+- Prevented empty, malformed, binary-looking, or oversized extractor output from being saved as a source sidecar or translated
+
 ## 2026-05-21
 
 ### Added

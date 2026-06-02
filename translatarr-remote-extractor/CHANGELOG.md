@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-06-02
+
+### Added
+- Added translation-safety validation for extracted and cached SRT output before `/extract` returns `ok=true`
+- Added `EXTRACTOR_MAX_EXTRACTED_SRT_BYTES`, defaulting to `1048576` bytes, to reject unusually large extracted subtitle files before translation use
+
+### Changed
+- Limited MKV extraction to direct SRT-compatible text subtitle tracks so image subtitles such as PGS/VobSub are not returned as fake `.srt` text
+- Made MP4 extraction prefer translation-compatible text subtitle streams before validating the ffmpeg output as SRT
+
+### Fixed
+- Prevented binary, malformed, empty, or non-SRT extraction output from being cached and returned as usable subtitle content
+
 ## 2026-03-30
 
 ### Changed

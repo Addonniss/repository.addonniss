@@ -143,6 +143,7 @@ services:
       LIBRETRANSLATE_TARGET: "ro"
 
       TRANSLATION_BATCH_SIZE: "100"
+      DECISION_MAX_SOURCE_SRT_BYTES: "1048576"
       # Save extracted embedded English next to the movie before translation.
       # Useful for audit/debug/retry. Set false if you only want the Romanian output.
       SAVE_SOURCE_SUBTITLE: "true"
@@ -225,6 +226,9 @@ docker compose up -d --build
   - number of subtitle cues attempted first per translation batch
   - if validation fails, the service shrinks to `50`, then `25`
   - default: `60`
+- `DECISION_MAX_SOURCE_SRT_BYTES`
+  - safety limit for extracted source SRT content accepted before save/translation
+  - default: `1048576`
 - `SAVE_SOURCE_SUBTITLE`
   - save extracted embedded source subtitles next to the media before translation
   - default: `true`

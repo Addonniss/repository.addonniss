@@ -19,6 +19,7 @@ Current capabilities:
 - `MP4` extraction via `ffprobe` + `ffmpeg`
 - target-language embedded subtitle probing through `/probe`
 - extracted subtitle caching
+- extraction output validation before translation use
 - request-driven timeout control from the Kodi add-on
 
 Deployment targets:
@@ -200,6 +201,9 @@ The workflow currently publishes:
   - writable temporary extraction directory
 - `EXTRACTOR_PATH_MAPS`
   - JSON array mapping Kodi playback paths to server-mounted paths
+- `EXTRACTOR_MAX_EXTRACTED_SRT_BYTES`
+  - optional safety limit for extracted SRT files returned by `/extract`
+  - default: `1048576`
 
 ## Important Path Rule
 

@@ -48,6 +48,11 @@ SAVE_SOURCE_SUBTITLE = os.environ.get("SAVE_SOURCE_SUBTITLE", "true").strip().lo
 PROTECT_SAVED_SUBTITLES = os.environ.get("PROTECT_SAVED_SUBTITLES", "true").strip().lower() in {"1", "true", "yes", "on"}
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
 DISCORD_NOTIFY_STEPS = os.environ.get("DISCORD_NOTIFY_STEPS", "true").strip().lower() in {"1", "true", "yes", "on"}
+MAX_SOURCE_SRT_BYTES = int(os.environ.get("DECISION_MAX_SOURCE_SRT_BYTES", str(1024 * 1024)))
+SRT_TIME_RE = re.compile(
+    r"^\s*\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}\s*-->\s*"
+    r"\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}"
+)
 
 MODEL_PRICING = {
     "gemini-2.5-flash": {"input": 0.075, "output": 0.30, "thought": 0.00},
@@ -255,16 +260,44 @@ def parse_srt_blocks(content: str) -> List[Dict[str, Any]]:
 
         index_line = lines[0] if lines[0].strip().isdigit() else ""
         time_pos = 1 if index_line else 0
-        if time_pos >= len(lines) or "-->" not in lines[time_pos]:
+        if time_pos >= len(lines) or not SRT_TIME_RE.match(lines[time_pos]):
             continue
 
         text_lines = lines[time_pos + 1:]
+        if not any(line.strip() for line in text_lines):
+            continue
         blocks.append({
             "index": index_line,
             "time": lines[time_pos],
             "text": "\n".join(text_lines),
         })
     return blocks
+
+
+def validate_source_srt(content: str) -> tuple:
+    if not content or not content.strip():
+        return False, "subtitle content is empty", []
+
+    encoded_size = len(content.encode("utf-8", errors="ignore"))
+    if encoded_size > MAX_SOURCE_SRT_BYTES:
+        return False, "subtitle content is too large for safe translation ({0} bytes)".format(encoded_size), []
+
+    if "\x00" in content[:4096]:
+        return False, "subtitle content looks binary, not text", []
+
+    control_chars = sum(1 for char in content if ord(char) < 32 and char not in "\r\n\t")
+    if control_chars > max(20, len(content) // 100):
+        return False, "subtitle content has too many control characters", []
+
+    blocks = parse_srt_blocks(content)
+    if not blocks:
+        return False, "subtitle content is not valid SRT", []
+
+    text_chars = sum(len(block.get("text") or "") for block in blocks)
+    if text_chars < 20 and len(content) > 1000:
+        return False, "subtitle content has no usable subtitle dialogue", []
+
+    return True, "", blocks
 
 
 def render_srt_blocks(blocks: List[Dict[str, Any]]) -> str:
@@ -506,7 +539,10 @@ def translate_srt_to_target(content: str) -> Dict[str, Any]:
     if TRANSLATION_PROVIDER == "none":
         raise RuntimeError("TRANSLATION_PROVIDER is set to none")
 
-    blocks = parse_srt_blocks(content)
+    valid, validation_error, blocks = validate_source_srt(content)
+    if not valid:
+        raise RuntimeError("Source subtitle rejected: {0}".format(validation_error))
+
     texts = [
         (block.get("text") or "").replace("\n", " [BR] ")
         for block in blocks
@@ -769,6 +805,15 @@ async def run_decision_job(job_id: str) -> None:
             ])
             return
 
+        source_valid, source_validation_error, source_blocks = validate_source_srt(source_srt)
+        if not source_valid:
+            update_job(job_id, "completed", "Extractor returned unusable subtitle content: {0}".format(source_validation_error), extractor=extract)
+            notify_job(job_id, "Translatarr Decision: no source", [
+                "Extractor returned unusable subtitle content",
+                "Reason: {0}".format(source_validation_error),
+            ])
+            return
+
         source_saved_path = None
         if SAVE_SOURCE_SUBTITLE:
             source_saved_path = write_language_sidecar(media_path, SOURCE_LANGUAGE_SUFFIX, source_srt)
@@ -776,12 +821,14 @@ async def run_decision_job(job_id: str) -> None:
             notify_job(job_id, "Translatarr Decision: extracted", [
                 "Embedded {0} subtitle extracted".format(SOURCE_LANGUAGE_NAME),
                 "Source subtitle: {0}".format(source_saved_path.name),
+                "Cues: {0}".format(len(source_blocks)),
             ])
         else:
             update_job(job_id, "running", "Embedded source subtitle extracted")
             notify_job(job_id, "Translatarr Decision: extracted", [
                 "Embedded {0} subtitle extracted".format(SOURCE_LANGUAGE_NAME),
                 "Source subtitle save: disabled",
+                "Cues: {0}".format(len(source_blocks)),
             ])
 
         sidecars = find_target_sidecars(media_path)
