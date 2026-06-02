@@ -128,8 +128,6 @@ class GeminiTranslator(BaseTranslator):
         "gemini-3.5-flash": (0.0000015, 0.0000090),
         "gemini-3.1-flash-lite": (0.00000025, 0.0000015),
         "gemini-2.5-pro": (0.00000125, 0.0000100),
-        "gemini-2.0-flash": (0.0000001, 0.0000004),
-        "gemini-1.5-flash": (0.0000000, 0.0000000),
         "gemini-2.5-flash": (0.0000003, 0.0000025),
         "gemini-2.5-flash-lite": (0.0000001, 0.0000004),
     }
@@ -146,11 +144,7 @@ class GeminiTranslator(BaseTranslator):
             "Gemini 2.5 Pro": "gemini-2.5-pro",
             "Gemini 2.5 Flash": "gemini-2.5-flash",
             "Fast Mode - Gemini 2.5 Flash": "gemini-2.5-flash",
-            "Gemini 2.5 Flash-Lite": "gemini-2.5-flash-lite",
-            "Gemini 2.0 Flash": "gemini-2.0-flash",
-            "Gemini 2.0 Flash (Legacy)": "gemini-2.0-flash",
-            "Gemini 1.5 Flash": "gemini-1.5-flash",
-            "Gemini 1.5 Flash (Legacy)": "gemini-1.5-flash"
+            "Gemini 2.5 Flash-Lite": "gemini-2.5-flash-lite"
         }
 
         selected_model = ADDON.getSetting('model')

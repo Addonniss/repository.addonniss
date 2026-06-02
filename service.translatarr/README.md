@@ -121,7 +121,6 @@ Recommended usage:
 - `Gemini 2.5 Flash`: the best default balance for most users. Good quality, good speed, and suitable for normal day-to-day subtitle translation.
 - `Fast Mode - Gemini 2.5 Flash`: use when you want the same Flash family but with a speed-first feel and less thinking overhead during playback.
 - `Gemini 2.5 Flash-Lite`: best for budget-sensitive or high-throughput usage where cost and speed matter more than maximum nuance.
-- `Gemini 2.0 Flash (Legacy)` and `Gemini 1.5 Flash (Legacy)`: mainly for compatibility or fallback if a newer Gemini model behaves unexpectedly in your environment.
 
 ### OpenAI
 
@@ -180,7 +179,6 @@ All LLM-based providers charge per token (input + output). Prices below are in *
 | Provider | Model | Input ($/1M) | Output ($/1M) |
 |---|---|---|---|
 | **Gemini** | 2.5 Flash-Lite | $0.01 | $0.04 |
-| | 2.0 Flash (Legacy) | $0.01 | $0.04 |
 | | 3.1 Flash-Lite | $0.025 | $0.15 |
 | | 2.5 Flash | $0.03 | $0.25 |
 | | 3.5 Flash | $0.15 | $0.90 |

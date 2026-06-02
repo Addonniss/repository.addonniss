@@ -1,3 +1,8 @@
+v2.5.5
+- Removed deprecated Gemini 2.0 Flash and Gemini 1.5 Flash options from the Gemini model picker
+- Removed deprecated Gemini 2.0 Flash and Gemini 1.5 Flash runtime mappings and pricing references
+- Updated README guidance and pricing so only currently supported Gemini model choices are documented
+
 v2.5.4
 - Fixed translation confirmation overlay Left/Right navigation jumping two buttons by letting Kodi's native XML navigation handle focus movement once
 - Darkened unfocused translation confirmation buttons further so the currently focused action is easier to see

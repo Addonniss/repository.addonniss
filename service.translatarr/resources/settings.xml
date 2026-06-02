@@ -116,8 +116,6 @@
                             <option label="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
                             <option label="Fast Mode - Gemini 2.5 Flash">Fast Mode - Gemini 2.5 Flash</option>
                             <option label="Gemini 2.5 Flash-Lite">Gemini 2.5 Flash-Lite</option>
-                            <option label="Gemini 2.0 Flash (Legacy)">Gemini 2.0 Flash (Legacy)</option>
-                            <option label="Gemini 1.5 Flash (Legacy)">Gemini 1.5 Flash (Legacy)</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
