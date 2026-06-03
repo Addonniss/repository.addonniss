@@ -1,3 +1,9 @@
+v2.5.6
+- Added optional Rolling Source Context for AI providers, letting each subtitle chunk use previous source lines as read-only context for better pronouns, fragments, tone, and references across chunk boundaries
+- Added a configurable rolling context window from 3 to 8 previous source subtitle lines, disabled by default and placed in the Translation settings group
+- Kept rolling context out of parsed output by labeling context lines separately from translated chunk lines
+- Translation Confirmation moved out of ALPHA 
+
 v2.5.5
 - Removed deprecated Gemini 2.0 Flash and Gemini 1.5 Flash options from the Gemini model picker
 - Removed deprecated Gemini 2.0 Flash and Gemini 1.5 Flash runtime mappings and pricing references

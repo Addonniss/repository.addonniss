@@ -926,6 +926,24 @@
                     <control type="toggle" />
                     <default>false</default>
                 </setting>
+                <setting id="rolling_subtitle_context_enabled" type="boolean" label="30105" help="30106">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                </setting>
+                <setting id="rolling_subtitle_window" type="integer" label="30107" help="30108">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>3</minimum>
+                        <step>1</step>
+                        <maximum>8</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>5</default>
+                    <dependencies>
+                        <dependency type="visible" setting="rolling_subtitle_context_enabled">true</dependency>
+                    </dependencies>
+                </setting>
             </group>
         </category>
         <category id="embedded_subtitles" label="30075">

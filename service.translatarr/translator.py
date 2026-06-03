@@ -58,6 +58,22 @@ def build_localization_instruction():
         "- Use context to choose grammatical gender correctly when the target language requires it.\n"
     )
 
+
+def build_source_context_block(context_list):
+    if not context_list:
+        return ""
+
+    prefixed = [f"C{i:03}: {t}" for i, t in enumerate(context_list)]
+    return (
+        "READ-ONLY SOURCE CONTEXT FROM PREVIOUS SUBTITLES:\n"
+        "- Use these previous source lines only to understand references, pronouns, tone, and sentence continuity.\n"
+        "- Do NOT translate these context lines.\n"
+        "- Do NOT output Cxxx anchors.\n"
+        + "\n".join(prefixed)
+        + "\n\n"
+        "CURRENT LINES TO TRANSLATE:\n"
+    )
+
 # ----------------------------------------------------------
 # Base Translator
 # ----------------------------------------------------------
@@ -109,7 +125,7 @@ class BaseTranslator:
 
         return cleaned if len(cleaned) == expected else None
 
-    def translate_batch(self, text_list, expected_count):
+    def translate_batch(self, text_list, expected_count, context_list=None):
         raise NotImplementedError
 
     def calculate_cost(self, input_tokens, output_tokens):
@@ -154,7 +170,7 @@ class GeminiTranslator(BaseTranslator):
             "Fast Mode - Gemini 3.1 Flash-Lite",
         )
 
-    def translate_batch(self, text_list, expected_count):
+    def translate_batch(self, text_list, expected_count, context_list=None):
 
         if not self.api_key:
             log("Gemini API key missing")
@@ -170,7 +186,7 @@ class GeminiTranslator(BaseTranslator):
             lang_instruction = f"Detect the source language and translate to {trg_name}."
 
         prefixed = [f"L{i:03}: {t}" for i, t in enumerate(text_list)]
-        input_text = "\n".join(prefixed)
+        input_text = build_source_context_block(context_list) + "\n".join(prefixed)
 
         style_block = build_style_instruction(trg_name)
         localization_block = build_localization_instruction()
@@ -192,6 +208,7 @@ class GeminiTranslator(BaseTranslator):
                         f"3. Return EXACTLY {expected_count} lines.\n"
                         "4. Return ONLY prefixed translated lines.\n"
                         "5. Do NOT add commentary.\n\n"
+                        "6. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output.\n\n"
                         f"{localization_block}\n"
                         f"{style_block}\n"
                         f"{input_text}"
@@ -273,7 +290,7 @@ class OpenAITranslator(BaseTranslator):
     def _supports_custom_temperature(self):
         return not self.model.startswith("gpt-5")
 
-    def translate_batch(self, text_list, expected_count):
+    def translate_batch(self, text_list, expected_count, context_list=None):
 
         if not self.api_key:
             log("OpenAI API key missing")
@@ -289,7 +306,7 @@ class OpenAITranslator(BaseTranslator):
             lang_instruction = f"Detect the source language and translate to {trg_name}."
 
         prefixed = [f"L{i:03}: {t}" for i, t in enumerate(text_list)]
-        input_text = "\n".join(prefixed)
+        input_text = build_source_context_block(context_list) + "\n".join(prefixed)
 
         style_block = build_style_instruction(trg_name)
         localization_block = build_localization_instruction()
@@ -308,6 +325,7 @@ class OpenAITranslator(BaseTranslator):
                         f"3. Return EXACTLY {expected_count} lines.\n"
                         "4. Return ONLY prefixed translated lines.\n"
                         "5. Do NOT add commentary.\n\n"
+                        "6. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output.\n\n"
                         f"{localization_block}\n"
                         f"{style_block}"
                     )
@@ -392,7 +410,7 @@ class AnthropicTranslator(BaseTranslator):
             "claude-haiku-4-5"
         )
 
-    def translate_batch(self, text_list, expected_count):
+    def translate_batch(self, text_list, expected_count, context_list=None):
 
         if not self.api_key:
             log("Anthropic API key missing")
@@ -408,7 +426,7 @@ class AnthropicTranslator(BaseTranslator):
             lang_instruction = f"Detect the source language and translate to {trg_name}."
 
         prefixed = [f"L{i:03}: {t}" for i, t in enumerate(text_list)]
-        input_text = "\n".join(prefixed)
+        input_text = build_source_context_block(context_list) + "\n".join(prefixed)
 
         style_block = build_style_instruction(trg_name)
         localization_block = build_localization_instruction()
@@ -426,6 +444,7 @@ class AnthropicTranslator(BaseTranslator):
                 f"3. Return EXACTLY {expected_count} lines.\n"
                 "4. Return ONLY prefixed translated lines.\n"
                 "5. Do NOT add commentary.\n\n"
+                "6. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output.\n\n"
                 f"{localization_block}\n"
                 f"{style_block}"
             ),
@@ -512,7 +531,7 @@ class DeepSeekTranslator(BaseTranslator):
             "deepseek-chat"
         )
 
-    def translate_batch(self, text_list, expected_count):
+    def translate_batch(self, text_list, expected_count, context_list=None):
 
         if not self.api_key:
             log("DeepSeek API key missing")
@@ -528,7 +547,7 @@ class DeepSeekTranslator(BaseTranslator):
             lang_instruction = f"Detect the source language and translate to {trg_name}."
 
         prefixed = [f"L{i:03}: {t}" for i, t in enumerate(text_list)]
-        input_text = "\n".join(prefixed)
+        input_text = build_source_context_block(context_list) + "\n".join(prefixed)
 
         style_block = build_style_instruction(trg_name)
         localization_block = build_localization_instruction()
@@ -547,6 +566,7 @@ class DeepSeekTranslator(BaseTranslator):
                         f"3. Return EXACTLY {expected_count} lines.\n"
                         "4. Return ONLY prefixed translated lines.\n"
                         "5. Do NOT add commentary.\n\n"
+                        "6. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output.\n\n"
                         f"{localization_block}\n"
                         f"{style_block}"
                     )
@@ -643,7 +663,7 @@ class DeepLTranslator(BaseTranslator):
 
         return src_code, trg_code, src_name, trg_name
 
-    def translate_batch(self, text_list, expected_count):
+    def translate_batch(self, text_list, expected_count, context_list=None):
 
         if not self.api_key:
             log("DeepL API key missing")
@@ -747,7 +767,7 @@ class LibreTranslateTranslator(BaseTranslator):
 
         return self.base_url.rstrip("/") + "/translate"
 
-    def translate_batch(self, text_list, expected_count):
+    def translate_batch(self, text_list, expected_count, context_list=None):
         endpoint = self._get_endpoint()
         if not endpoint:
             return None, 0, 0
@@ -831,8 +851,8 @@ def _get_translator():
     return GeminiTranslator()
 
 
-def translate_batch(text_list, expected_count):
-    return _get_translator().translate_batch(text_list, expected_count)
+def translate_batch(text_list, expected_count, context_list=None):
+    return _get_translator().translate_batch(text_list, expected_count, context_list=context_list)
 
 
 def calculate_cost(input_tokens, output_tokens):

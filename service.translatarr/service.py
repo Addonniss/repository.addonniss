@@ -424,7 +424,21 @@ def process_subtitles(original_path, monitor, force_retranslate=False, save_path
      
                     batch_items = work_items[idx:idx + curr_size]
                     batch_texts = [item[1] for item in batch_items]
-                    res, in_t, out_t = translator.translate_batch(batch_texts, curr_size)
+                    context_texts = None
+                    if monitor.rolling_subtitle_context_enabled and idx > 0:
+                        context_start = max(0, idx - monitor.rolling_subtitle_window)
+                        context_items = work_items[context_start:idx]
+                        context_texts = [item[1] for item in context_items]
+                        log(
+                            f"Adding rolling source context: {len(context_texts)} previous subtitle lines",
+                            "debug",
+                            monitor
+                        )
+                    res, in_t, out_t = translator.translate_batch(
+                        batch_texts,
+                        curr_size,
+                        context_list=context_texts
+                    )
      
                     if res:
                         for (line_index, _), translated_line in zip(batch_items, res):
@@ -1051,6 +1065,7 @@ class TranslatarrMonitor(xbmc.Monitor):
         self.show_stats = safe_bool('show_stats', True)
         self.remove_sdh_hi_cues = safe_bool('remove_sdh_hi_cues', False)
         self.dual_language_display = safe_bool('dual_language_display', False)
+        self.rolling_subtitle_context_enabled = safe_bool('rolling_subtitle_context_enabled', False)
         self.enable_embedded_subtitle_extraction = safe_bool('enable_embedded_subtitle_extraction', False)
         self.force_embedded_source_extraction = safe_bool('force_embedded_source_extraction', False)
         self.remote_extractor_enabled = safe_bool('remote_extractor_enabled', False)
@@ -1059,6 +1074,10 @@ class TranslatarrMonitor(xbmc.Monitor):
         # Numeric / string settings
         # ------------------------------------------------------------
         self.chunk_size = safe_int('chunk_size', 100)
+        self.rolling_subtitle_window = max(
+            3,
+            min(8, safe_int('rolling_subtitle_window', 5))
+        )
         self.translation_confirmation_delay = max(
             0,
             min(
@@ -1175,6 +1194,8 @@ class TranslatarrMonitor(xbmc.Monitor):
             f"stats={self.show_stats}, "
             f"sdh_hi_removal={self.remove_sdh_hi_cues}, "
             f"dual_language={self.dual_language_display}, "
+            f"rolling_context={self.rolling_subtitle_context_enabled}, "
+            f"rolling_window={self.rolling_subtitle_window}, "
             f"chunk_size={self.chunk_size}, "
             f"source_lang={self.source_lang_name} ({self.source_lang_iso}), "
             f"target_lang={self.target_lang_name} ({self.target_lang_iso}), "

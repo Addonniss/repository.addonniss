@@ -162,7 +162,7 @@ msgid "Select the specific Claude model version."
 msgstr ""
 
 msgctxt "#30091"
-msgid "Require translation confirmation (ALPHA)"
+msgid "Translation Confirmation"
 msgstr ""
 
 msgctxt "#30092"
@@ -174,7 +174,7 @@ msgid "Translate"
 msgstr ""
 
 msgctxt "#30094"
-msgid "Translation confirmation delay"
+msgid "Translation Confirmation Delay"
 msgstr ""
 
 msgctxt "#30095"
@@ -190,7 +190,7 @@ msgid "Skip"
 msgstr ""
 
 msgctxt "#30099"
-msgid "Reminder delay"
+msgid "Translation Reminder Delay"
 msgstr ""
 
 msgctxt "#30100"
@@ -399,4 +399,20 @@ msgstr ""
 
 msgctxt "#30086"
 msgid "Extraction Method"
+msgstr ""
+
+msgctxt "#30105"
+msgid "Rolling Source Context"
+msgstr ""
+
+msgctxt "#30106"
+msgid "Adds previous source subtitle lines as read-only context for AI translation. Helps the model understand pronouns, sentence fragments, tone, and references across chunk boundaries without translating the context lines."
+msgstr ""
+
+msgctxt "#30107"
+msgid "Rolling Context Window"
+msgstr ""
+
+msgctxt "#30108"
+msgid "Number of previous source subtitle lines to include as read-only translation context. Allowed range is 3 to 8 lines."
 msgstr ""
