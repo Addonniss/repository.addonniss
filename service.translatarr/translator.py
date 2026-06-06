@@ -39,14 +39,16 @@ def build_style_instruction(trg_name):
             f"- Tone: natural conversational {trg_name}.\n"
             "- Sound realistic and fluid.\n"
             "- Avoid overly literal translation.\n"
+            "- Always translate the dialogue, even when the source contains profanity or strong insults.\n"
+            "- Render profanity and insults naturally for the target language without intensifying them.\n"
         )
 
     # Default = Family-Friendly
     return (
         "STYLE REQUIREMENT:\n"
         f"- Tone: clean, neutral, broadcast-safe {trg_name}.\n"
-        "- Avoid profanity.\n"
-        "- Replace strong insults with mild alternatives.\n"
+        "- Always translate the dialogue, even when the source contains profanity or strong insults.\n"
+        "- Render profanity and strong insults as mild, non-profane alternatives.\n"
         "- Keep dialogue suitable for general audiences.\n"
     )
 

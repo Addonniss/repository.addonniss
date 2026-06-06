@@ -1,3 +1,7 @@
+v2.5.7
+- Updated Family-Friendly and Natural style prompts so heavy profanity in source subtitles is still translated instead of causing providers to stop or refuse the chunk
+- Family-Friendly now asks providers to render profanity as mild, non-profane alternatives, while Natural keeps dialogue realistic without intensifying strong language
+
 v2.5.6
 - Added optional Rolling Source Context for AI providers, letting each subtitle chunk use previous source lines as read-only context for better pronouns, fragments, tone, and references across chunk boundaries
 - Added a configurable rolling context window from 3 to 8 previous source subtitle lines, disabled by default and placed in the Translation settings group
