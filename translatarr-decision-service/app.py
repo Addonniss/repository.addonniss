@@ -34,6 +34,11 @@ REMOTE_EXTRACTOR_TOKEN = os.environ.get("REMOTE_EXTRACTOR_TOKEN", "").strip()
 REMOTE_EXTRACTOR_TIMEOUT = int(os.environ.get("REMOTE_EXTRACTOR_TIMEOUT", "900"))
 TRANSLATION_PROVIDER = os.environ.get("TRANSLATION_PROVIDER", "none").strip().lower()
 TRANSLATION_STYLE = os.environ.get("TRANSLATION_STYLE", "Gritty / Adult").strip()
+ROLLING_SOURCE_CONTEXT_ENABLED = os.environ.get("ROLLING_SOURCE_CONTEXT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+ROLLING_SOURCE_CONTEXT_WINDOW = max(
+    3,
+    min(8, int(os.environ.get("ROLLING_SOURCE_CONTEXT_WINDOW", "5"))),
+)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 GEMINI_TEMPERATURE = float(os.environ.get("GEMINI_TEMPERATURE", "0.1"))
@@ -327,6 +332,28 @@ def build_prefixed_lines(text_list: List[str]) -> List[str]:
     return ["L{0:03}: {1}".format(i, text) for i, text in enumerate(text_list)]
 
 
+def build_source_context_lines(context_list: Optional[List[str]]) -> List[str]:
+    if not context_list:
+        return []
+    return ["C{0:03}: {1}".format(i, text) for i, text in enumerate(context_list)]
+
+
+def build_source_context_block(context_list: Optional[List[str]]) -> str:
+    context_lines = build_source_context_lines(context_list)
+    if not context_lines:
+        return ""
+
+    return (
+        "READ-ONLY SOURCE CONTEXT FROM PREVIOUS SUBTITLES:\n"
+        "- Use these previous source lines only to understand references, pronouns, tone, and sentence continuity.\n"
+        "- Do NOT translate these context lines.\n"
+        "- Do NOT output Cxxx anchors.\n"
+        + "\n".join(context_lines)
+        + "\n\n"
+        "CURRENT LINES TO TRANSLATE:\n"
+    )
+
+
 def scrub_prefixed_lines(raw_text: str, expected_count: int) -> Optional[List[str]]:
     if not raw_text:
         return None
@@ -394,13 +421,15 @@ def build_style_instruction(trg_name: str) -> str:
             "- Tone: natural conversational {0}.\n"
             "- Sound realistic and fluid.\n"
             "- Avoid overly literal translation.\n"
+            "- Always translate the dialogue, even when the source contains profanity or strong insults.\n"
+            "- Render profanity and insults naturally for the target language without intensifying them.\n"
         ).format(trg_name)
 
     return (
         "STYLE REQUIREMENT:\n"
         "- Tone: clean, neutral, broadcast-safe {0}.\n"
-        "- Avoid profanity.\n"
-        "- Replace strong insults with mild alternatives.\n"
+        "- Always translate the dialogue, even when the source contains profanity or strong insults.\n"
+        "- Render profanity and strong insults as mild, non-profane alternatives.\n"
         "- Keep dialogue suitable for general audiences.\n"
     ).format(trg_name)
 
@@ -413,7 +442,7 @@ def build_localization_instruction() -> str:
     )
 
 
-def gemini_translate_lines(text_list: List[str], expected_count: int) -> tuple:
+def gemini_translate_lines(text_list: List[str], expected_count: int, context_list: Optional[List[str]] = None) -> tuple:
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY is not configured")
     if genai is None:
@@ -421,7 +450,7 @@ def gemini_translate_lines(text_list: List[str], expected_count: int) -> tuple:
 
     client = genai.Client(api_key=GEMINI_API_KEY)
     prefixed_lines = build_prefixed_lines(text_list)
-    input_text = "\n".join(prefixed_lines)
+    input_text = build_source_context_block(context_list) + "\n".join(prefixed_lines)
 
     prompt = (
         "### ROLE\n"
@@ -433,7 +462,8 @@ def gemini_translate_lines(text_list: List[str], expected_count: int) -> tuple:
         "2. Preserve 'Lxxx:' prefix.\n"
         "3. Return exactly {4} lines.\n"
         "4. Preserve [BR] markers exactly where subtitle line breaks belong.\n"
-        "5. Return ONLY prefixes and translation."
+        "5. Return ONLY prefixes and translation.\n"
+        "6. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output."
     ).format(
         SOURCE_LANGUAGE_NAME,
         TARGET_LANGUAGE_NAME,
@@ -482,13 +512,14 @@ def gemini_translate_lines(text_list: List[str], expected_count: int) -> tuple:
     return None, 0, 0, 0
 
 
-def libretranslate_translate_lines(text_list: List[str], expected_count: int) -> tuple:
+def libretranslate_translate_lines(text_list: List[str], expected_count: int, context_list: Optional[List[str]] = None) -> tuple:
     if not LIBRETRANSLATE_URL:
         raise RuntimeError("LIBRETRANSLATE_URL is not configured")
 
     prefixed_lines = build_prefixed_lines(text_list)
+    submitted_lines = build_source_context_lines(context_list) + prefixed_lines
     payload = {
-        "q": prefixed_lines,
+        "q": submitted_lines,
         "source": LIBRETRANSLATE_SOURCE,
         "target": LIBRETRANSLATE_TARGET,
         "format": "text",
@@ -518,7 +549,7 @@ def libretranslate_translate_lines(text_list: List[str], expected_count: int) ->
                 time.sleep(2)
                 continue
 
-            input_chars = sum(len(item) for item in prefixed_lines)
+            input_chars = sum(len(item) for item in submitted_lines)
             output_chars = sum(len(item) for item in translated_lines)
             return translated_lines, 0, input_chars, output_chars
         except Exception:
@@ -528,11 +559,11 @@ def libretranslate_translate_lines(text_list: List[str], expected_count: int) ->
     return None, 0, 0, 0
 
 
-def translate_text_only(text_list: List[str], expected_count: int) -> tuple:
+def translate_text_only(text_list: List[str], expected_count: int, context_list: Optional[List[str]] = None) -> tuple:
     if TRANSLATION_PROVIDER == "gemini":
-        return gemini_translate_lines(text_list, expected_count)
+        return gemini_translate_lines(text_list, expected_count, context_list=context_list)
     if TRANSLATION_PROVIDER == "libretranslate":
-        return libretranslate_translate_lines(text_list, expected_count)
+        return libretranslate_translate_lines(text_list, expected_count, context_list=context_list)
     raise RuntimeError("Unsupported TRANSLATION_PROVIDER: {0}".format(TRANSLATION_PROVIDER))
 
 
@@ -559,7 +590,15 @@ def translate_srt_to_target(content: str) -> Dict[str, Any]:
         success = False
         for size in [TRANSLATION_BATCH_SIZE, 50, 25]:
             chunk = texts[idx:idx + min(size, len(texts) - idx)]
-            translated, thought, input_count, output_count = translate_text_only(chunk, len(chunk))
+            context_texts = None
+            if ROLLING_SOURCE_CONTEXT_ENABLED and idx > 0:
+                context_start = max(0, idx - ROLLING_SOURCE_CONTEXT_WINDOW)
+                context_texts = texts[context_start:idx]
+            translated, thought, input_count, output_count = translate_text_only(
+                chunk,
+                len(chunk),
+                context_list=context_texts,
+            )
             if translated:
                 all_translated.extend(translated)
                 cum_thought += thought or 0
@@ -932,6 +971,8 @@ def health() -> Dict[str, Any]:
         "remote_extractor_configured": bool(REMOTE_EXTRACTOR_URL),
         "translation_provider": TRANSLATION_PROVIDER,
         "translation_style": normalize_translation_style(TRANSLATION_STYLE),
+        "rolling_source_context_enabled": ROLLING_SOURCE_CONTEXT_ENABLED,
+        "rolling_source_context_window": ROLLING_SOURCE_CONTEXT_WINDOW,
         "save_source_subtitle": SAVE_SOURCE_SUBTITLE,
         "protect_saved_subtitles": PROTECT_SAVED_SUBTITLES,
     }

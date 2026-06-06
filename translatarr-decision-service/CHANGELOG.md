@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Added optional rolling source context for Gemini and LibreTranslate translation batches, controlled by `ROLLING_SOURCE_CONTEXT_ENABLED`
+- Added `ROLLING_SOURCE_CONTEXT_WINDOW` with the same 3 to 8 previous-line limits and default-off behavior as `service.translatarr`
+- Kept rolling context out of parsed subtitle output by labeling context as `Cxxx:` lines and accepting only translated `Lxxx:` lines
+
 ## 2026-06-02
 
 ### Added

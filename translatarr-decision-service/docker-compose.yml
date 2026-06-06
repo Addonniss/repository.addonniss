@@ -25,6 +25,10 @@ services:
       # - Gritty / Adult: raw adult tone, preserves profanity and insults
       # LibreTranslate does not support prompt-level style control.
       TRANSLATION_STYLE: "Gritty / Adult"
+      # Optional rolling source context for AI and machine translation providers.
+      # Sends previous source subtitle lines as Cxxx read-only context; parsed output still only accepts Lxxx lines.
+      ROLLING_SOURCE_CONTEXT_ENABLED: "false"
+      ROLLING_SOURCE_CONTEXT_WINDOW: "5"
       GEMINI_API_KEY: "CHANGE_ME"
       GEMINI_MODEL: "gemini-2.5-flash-lite"
       GEMINI_TEMPERATURE: "0.15"

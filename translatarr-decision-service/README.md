@@ -129,6 +129,11 @@ services:
       # LibreTranslate does not support prompt-level style control.
       TRANSLATION_STYLE: "Gritty / Adult"
 
+      # Optional rolling source context for AI and machine translation providers.
+      # Sends previous source subtitle lines as Cxxx read-only context; parsed output still only accepts Lxxx lines.
+      ROLLING_SOURCE_CONTEXT_ENABLED: "false"
+      ROLLING_SOURCE_CONTEXT_WINDOW: "5"
+
       GEMINI_API_KEY: "replace-with-your-key"
       GEMINI_MODEL: "gemini-2.5-flash-lite"
       GEMINI_TEMPERATURE: "0.15"
@@ -201,6 +206,14 @@ docker compose up -d --build
   - Gemini prompt style: `Family-Friendly`, `Natural`, or `Gritty / Adult`
   - default: `Gritty / Adult`
   - LibreTranslate does not support prompt-level style control
+- `ROLLING_SOURCE_CONTEXT_ENABLED`
+  - include previous source subtitle lines as `Cxxx:` read-only context for AI and machine translation providers
+  - translated output parsing still accepts only current `Lxxx:` lines
+  - default: `false`
+- `ROLLING_SOURCE_CONTEXT_WINDOW`
+  - number of previous source subtitle lines to include when rolling context is enabled
+  - allowed range: `3` to `8`
+  - default: `5`
 - `GEMINI_API_KEY`
   - required when `TRANSLATION_PROVIDER=gemini`
 - `GEMINI_MODEL`
@@ -255,9 +268,10 @@ Gemini uses the proven `project.bazaar` style strategy:
 - chunks shrink from `TRANSLATION_BATCH_SIZE` to `50` to `25` if validation fails
 - `[BR]` markers preserve multi-line subtitle breaks
 - localization guidance is always included for Gemini prompts, matching `service.translatarr`
+- optional rolling source context can include previous source subtitle lines as `Cxxx:` context while keeping parsed output limited to `Lxxx:` translated lines
 - if `SAVE_SOURCE_SUBTITLE=true`, the extracted source subtitle is saved before translation, for example `.en.srt`
 
-LibreTranslate uses the same prefixed-line validation pattern, but it cannot receive style or localization prompt instructions.
+LibreTranslate uses the same prefixed-line validation pattern. When rolling source context is enabled, context is submitted as separately labeled `Cxxx:` lines and ignored during output parsing, but LibreTranslate cannot receive style or localization prompt instructions.
 
 ## Sidecar Detection
 
