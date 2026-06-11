@@ -109,17 +109,28 @@
                     <level>0</level>
                     <constraints>
                         <options>
-                            <option label="Gemini 3.5 Flash">Gemini 3.5 Flash</option>
                             <option label="Gemini 3.1 Flash-Lite">Gemini 3.1 Flash-Lite</option>
-                            <option label="Fast Mode - Gemini 3.1 Flash-Lite">Fast Mode - Gemini 3.1 Flash-Lite</option>
-                            <option label="Gemini 2.5 Pro">Gemini 2.5 Pro</option>
-                            <option label="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
-                            <option label="Fast Mode - Gemini 2.5 Flash">Fast Mode - Gemini 2.5 Flash</option>
                             <option label="Gemini 2.5 Flash-Lite">Gemini 2.5 Flash-Lite</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
-                    <default>Gemini 2.5 Flash</default>
+                    <default>Gemini 3.1 Flash-Lite</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">Gemini</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="gemini_thinking_level" type="string" label="30109" help="30110">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Minimal">Minimal</option>
+                            <option label="Low">Low</option>
+                            <option label="Medium">Medium</option>
+                            <option label="High">High</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>Minimal</default>
                     <dependencies>
                         <dependency type="visible" setting="provider">Gemini</dependency>
                     </dependencies>
@@ -139,13 +150,29 @@
                     <level>0</level>
                     <constraints>
                         <options>
-                            <option label="gpt-4o-mini">gpt-4o-mini</option>
-                            <option label="gpt-4o">gpt-4o</option>
+                            <option label="gpt-5.4-nano">gpt-5.4-nano</option>
                             <option label="gpt-5-mini">gpt-5-mini</option>
+                            <option label="gpt-4o-mini">gpt-4o-mini</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
-                    <default>gpt-4o-mini</default>
+                    <default>gpt-5.4-nano</default>
+                    <dependencies>
+                        <dependency type="visible" setting="provider">OpenAI</dependency>
+                    </dependencies>
+                </setting>
+                <setting id="openai_reasoning_effort" type="string" label="30111" help="30112">
+                    <level>0</level>
+                    <constraints>
+                        <options>
+                            <option label="Minimal">Minimal</option>
+                            <option label="Low">Low</option>
+                            <option label="Medium">Medium</option>
+                            <option label="High">High</option>
+                        </options>
+                    </constraints>
+                    <control type="list" format="string" />
+                    <default>Minimal</default>
                     <dependencies>
                         <dependency type="visible" setting="provider">OpenAI</dependency>
                     </dependencies>
@@ -166,8 +193,6 @@
                     <constraints>
                         <options>
                             <option label="Claude Haiku 4.5">Claude Haiku</option>
-                            <option label="Claude Sonnet 4.6">Claude Sonnet</option>
-                            <option label="Claude Opus 4.7">Claude Opus</option>
                         </options>
                     </constraints>
                     <control type="list" format="string" />
@@ -257,7 +282,6 @@
                     <level>0</level>
                     <constraints>
                         <options>
-                            <option label="DeepSeek V4 Pro">DeepSeek V4 Pro</option>
                             <option label="DeepSeek V4 Flash">DeepSeek V4 Flash</option>
                         </options>
                     </constraints>

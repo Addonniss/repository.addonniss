@@ -143,34 +143,32 @@ class BaseTranslator:
 class GeminiTranslator(BaseTranslator):
 
     PRICING = {
-        "gemini-3.5-flash": (0.0000015, 0.0000090),
         "gemini-3.1-flash-lite": (0.00000025, 0.0000015),
-        "gemini-2.5-pro": (0.00000125, 0.0000100),
-        "gemini-2.5-flash": (0.0000003, 0.0000025),
         "gemini-2.5-flash-lite": (0.0000001, 0.0000004),
     }
 
     def __init__(self):
         self.api_key = ADDON.getSetting('api_key')
         self.temperature = self._get_temperature("Gemini")
-        self.fast_mode = False
 
         model_map = {
-            "Gemini 3.5 Flash": "gemini-3.5-flash",
             "Gemini 3.1 Flash-Lite": "gemini-3.1-flash-lite",
-            "Fast Mode - Gemini 3.1 Flash-Lite": "gemini-3.1-flash-lite",
-            "Gemini 2.5 Pro": "gemini-2.5-pro",
-            "Gemini 2.5 Flash": "gemini-2.5-flash",
-            "Fast Mode - Gemini 2.5 Flash": "gemini-2.5-flash",
             "Gemini 2.5 Flash-Lite": "gemini-2.5-flash-lite"
         }
 
         selected_model = ADDON.getSetting('model')
-        self.model = model_map.get(selected_model, "gemini-2.5-flash")
-        self.fast_mode = selected_model in (
-            "Fast Mode - Gemini 2.5 Flash",
-            "Fast Mode - Gemini 3.1 Flash-Lite",
-        )
+        self.model = model_map.get(selected_model, "gemini-3.1-flash-lite")
+
+        # Thinking level for Gemini 3.x models
+        thinking_map = {
+            "Minimal": "minimal",
+            "Low": "low",
+            "Medium": "medium",
+            "High": "high",
+        }
+        raw_level = ADDON.getSetting('gemini_thinking_level') or "Minimal"
+        self.thinking_level = thinking_map.get(raw_level, "minimal")
+        self.is_gemini3 = self.model.startswith("gemini-3")
 
     def translate_batch(self, text_list, expected_count, context_list=None):
 
@@ -222,9 +220,9 @@ class GeminiTranslator(BaseTranslator):
             }
         }
 
-        if self.fast_mode and self.model in ("gemini-2.5-flash", "gemini-3.1-flash-lite"):
+        if self.is_gemini3:
             payload["generationConfig"]["thinkingConfig"] = {
-                "thinkingBudget": 0
+                "thinkingLevel": self.thinking_level
             }
 
         try:
@@ -262,8 +260,9 @@ class GeminiTranslator(BaseTranslator):
         return (input_tokens * in_price) + (output_tokens * out_price)
 
     def get_model_string(self):
-        suffix = " Fast" if self.fast_mode else ""
-        return f"Gemini ({self.model}{suffix})"
+        if self.is_gemini3:
+            return f"Gemini ({self.model}, think={self.thinking_level})"
+        return f"Gemini ({self.model})"
 
 
 # ==========================================================
@@ -272,9 +271,9 @@ class GeminiTranslator(BaseTranslator):
 class OpenAITranslator(BaseTranslator):
 
     PRICING = {
-        "gpt-4o-mini": (0.00000015, 0.00000060),
-        "gpt-4o": (0.0000025, 0.0000100),
+        "gpt-5.4-nano": (0.00000020, 0.00000125),
         "gpt-5-mini": (0.00000025, 0.0000020),
+        "gpt-4o-mini": (0.00000015, 0.00000060),
     }
 
     def __init__(self):
@@ -282,12 +281,23 @@ class OpenAITranslator(BaseTranslator):
         self.temperature = self._get_temperature("OpenAI")
 
         model_map = {
+            "gpt-5.4-nano": "gpt-5.4-nano",
+            "gpt-5-mini": "gpt-5-mini",
             "gpt-4o-mini": "gpt-4o-mini",
-            "gpt-4o": "gpt-4o",
-            "gpt-5-mini": "gpt-5-mini"
         }
 
-        self.model = model_map.get(ADDON.getSetting('openai_model'), "gpt-4o-mini")
+        self.model = model_map.get(ADDON.getSetting('openai_model'), "gpt-5.4-nano")
+        self.is_gpt5 = self.model.startswith("gpt-5")
+
+        # Reasoning effort for GPT-5 models
+        reasoning_map = {
+            "Minimal": "minimal",
+            "Low": "low",
+            "Medium": "medium",
+            "High": "high",
+        }
+        raw_level = ADDON.getSetting('openai_reasoning_effort') or "Minimal"
+        self.reasoning_effort = reasoning_map.get(raw_level, "minimal")
 
     def _supports_custom_temperature(self):
         return not self.model.startswith("gpt-5")
@@ -335,7 +345,9 @@ class OpenAITranslator(BaseTranslator):
                 {"role": "user", "content": input_text}
             ]
         }
-        if self._supports_custom_temperature():
+        if self.is_gpt5:
+            payload["reasoning_effort"] = self.reasoning_effort
+        elif self._supports_custom_temperature():
             payload["temperature"] = self.temperature
 
         headers = {
@@ -383,6 +395,8 @@ class OpenAITranslator(BaseTranslator):
         return (input_tokens * in_price) + (output_tokens * out_price)
 
     def get_model_string(self):
+        if self.is_gpt5:
+            return f"OpenAI ({self.model}, reason={self.reasoning_effort})"
         return f"OpenAI ({self.model})"
 
 
@@ -393,8 +407,6 @@ class AnthropicTranslator(BaseTranslator):
 
     PRICING = {
         "claude-haiku-4-5": (0.0000010, 0.0000050),
-        "claude-sonnet-4-6": (0.0000030, 0.0000150),
-        "claude-opus-4-7": (0.0000050, 0.0000250),
     }
 
     def __init__(self):
@@ -403,8 +415,6 @@ class AnthropicTranslator(BaseTranslator):
 
         model_map = {
             "Claude Haiku": "claude-haiku-4-5",
-            "Claude Sonnet": "claude-sonnet-4-6",
-            "Claude Opus": "claude-opus-4-7",
         }
 
         self.model = model_map.get(
@@ -515,8 +525,7 @@ class AnthropicTranslator(BaseTranslator):
 class DeepSeekTranslator(BaseTranslator):
 
     PRICING = {
-        "deepseek-chat": (0.00000027, 0.00000110),       # V4 Pro
-        "deepseek-chat-flash": (0.00000014, 0.00000055),  # V4 Flash
+        "deepseek-v4-flash": (0.00000014, 0.00000028),
     }
 
     def __init__(self):
@@ -524,13 +533,12 @@ class DeepSeekTranslator(BaseTranslator):
         self.temperature = self._get_temperature("DeepSeek")
 
         model_map = {
-            "DeepSeek V4 Pro": "deepseek-chat",
-            "DeepSeek V4 Flash": "deepseek-chat-flash",
+            "DeepSeek V4 Flash": "deepseek-v4-flash",
         }
 
         self.model = model_map.get(
             ADDON.getSetting('deepseek_model'),
-            "deepseek-chat"
+            "deepseek-v4-flash"
         )
 
     def translate_batch(self, text_list, expected_count, context_list=None):

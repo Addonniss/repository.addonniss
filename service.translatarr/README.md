@@ -5,9 +5,9 @@ Translatarr is a Kodi service add-on that detects subtitles during playback, tra
 It supports these translation providers:
 
 - Gemini: [model docs](https://ai.google.dev/gemini-api/docs/models/gemini)
-- OpenAI: [GPT-4o](https://platform.openai.com/docs/models/gpt-4o), [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini), [GPT-5 mini](https://platform.openai.com/docs/models/gpt-5-mini/)
+- OpenAI: [GPT-5.4 nano](https://platform.openai.com/docs/models/gpt-5.4-nano), [GPT-5 mini](https://platform.openai.com/docs/models/gpt-5-mini/), [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini)
 - Anthropic Claude: [models overview](https://platform.claude.com/docs/en/about-claude/models/overview)
-- DeepSeek: [platform](https://platform.deepseek.com/) — V4 Pro and V4 Flash
+- DeepSeek: [platform](https://platform.deepseek.com/) — V4 Flash
 - DeepL Free: [API Free plan](https://support.deepl.com/hc/en-us/articles/360021200939-DeepL-API-Free)
 - LibreTranslate: [documentation](https://docs.libretranslate.com/)
 
@@ -24,12 +24,14 @@ Main capabilities:
 - optional embedded subtitle extraction from MKV and MP4 files
 - optional remote embedded-subtitle extraction through the companion [Translatarr Remote Extractor](https://github.com/addonniss/repository.addonniss/blob/main/translatarr-remote-extractor/README.md)
 
-## What's New in v2.5.2
+## What's New in v2.5.8
 
-- Added **DeepSeek** as a new AI translation provider with DeepSeek V4 Pro and DeepSeek V4 Flash model options.
-- Shortened the remind button label to `Remind:XXs` to prevent text scrolling on small buttons.
+- Added **Thinking Level** control for Gemini 3.x models and **Reasoning Effort** control for OpenAI GPT-5 models, letting you choose how much the AI reasons before translating.
+- Simplified model lists across all AI providers, keeping only the most cost-effective options for subtitle translation.
+- Added **GPT-5.4 nano** as the new OpenAI default, the cheapest GPT-5 class model.
+- Fixed and verified pricing for all AI providers against their current official rates.
 
-## Previous Highlights in v2.5.1
+## Previous Highlights in v2.5.2
 
 - Added `Require translation confirmation (ALPHA)` for users who want to approve a detected source subtitle before Translatarr starts translating it.
 - Source subtitles are loaded first so you can check whether they are usable before spending time or provider credits on translation.
@@ -107,48 +109,32 @@ Use Manual if you want predictable folder-based behavior or if your subtitle add
 
 ### Gemini
 
-Requires a Gemini API key. Model selection is available in settings, including:
+Requires a Gemini API key. Model selection is available in settings:
 
+- `Gemini 3.1 Flash-Lite` (default) — best balance of quality and cost for most users
+- `Gemini 2.5 Flash-Lite` — the cheapest option for high-throughput translation
 
-Gemini 2.5 Flash remains the default. Flash-Lite is the budget / high-throughput option. Fast Mode keeps the normal model family but reduces thinking for a different speed / UX tradeoff.
-
-Recommended usage:
-
-- `Gemini 3.5 Flash`: best when you want a newer stable Gemini option with strong quality while still staying in the Flash family.
-- `Gemini 3.1 Flash-Lite`: best when you want an even cheaper high-throughput Gemini option for fast subtitle jobs.
-- `Fast Mode - Gemini 3.1 Flash-Lite`: use when you want the lowest-overhead Gemini Lite path and you are happy to trade some thinking depth for speed during playback.
-- `Gemini 2.5 Pro`: best when subtitle nuance matters most and you want the strongest overall quality, even if it is slower or more expensive.
-- `Gemini 2.5 Flash`: the best default balance for most users. Good quality, good speed, and suitable for normal day-to-day subtitle translation.
-- `Fast Mode - Gemini 2.5 Flash`: use when you want the same Flash family but with a speed-first feel and less thinking overhead during playback.
-- `Gemini 2.5 Flash-Lite`: best for budget-sensitive or high-throughput usage where cost and speed matter more than maximum nuance.
+A **Thinking Level** setting is available for Gemini 3.x models, controlling how much the model reasons before translating. Options are Minimal (default, fastest), Low, Medium, and High.
 
 ### OpenAI
 
-Requires an OpenAI API key. Model selection is available in settings, including GPT-4o, GPT-4o mini, and GPT-5 mini.
+Requires an OpenAI API key. Model selection is available in settings:
 
-Recommended usage:
+- `gpt-5.4-nano` (default) — the cheapest GPT-5 class model, ideal for high-volume translation
+- `gpt-5-mini` — a faster GPT-5 option with good quality
+- `gpt-4o-mini` — a proven low-cost non-reasoning model
 
-- `gpt-4o-mini`: best low-cost OpenAI default for most subtitle jobs.
-- `gpt-4o`: use when you want stronger wording quality and can accept higher cost.
-- `gpt-5-mini`: use when you want a newer OpenAI reasoning-focused option with a good quality / cost balance.
+A **Reasoning Effort** setting is available for GPT-5 models, controlling how much the model reasons before translating. Options are Minimal (default, fastest), Low, Medium, and High.
 
 ### Anthropic Claude
 
-Requires an Anthropic API key. Model selection is available in settings, including:
-Recommended usage:
-
-- `Claude Haiku 4.5`: best for lower-cost, faster Claude usage.
-- `Claude Sonnet 4.6`: best all-around Claude option for most users, balancing quality, speed, and cost.
-- `Claude Opus 4.7`: use when you want the highest-end Claude quality for difficult dialogue, tone, or localization nuance.
+Requires an Anthropic API key. Translatarr uses **Claude Haiku 4.5**, the most cost-effective Claude model for translation.
 
 ### DeepSeek
 
 DeepSeek uses an OpenAI-compatible API. Translatarr sends translation requests directly to the DeepSeek chat completions endpoint.
 
-Recommended usage:
-
-- `DeepSeek V4 Pro`: best when you want top-quality translation with the strongest language understanding. Use for nuanced dialogue, idiomatic expressions, and complex subtitle localization.
-- `DeepSeek V4 Flash`: a faster, lower-cost option that still delivers strong translation quality. Best for everyday subtitle translation where speed and affordability are priorities.
+Translatarr uses **DeepSeek V4 Flash**, a fast, low-cost option that delivers strong translation quality for everyday subtitle translation.
 
 ### DeepL Free
 
@@ -178,19 +164,13 @@ All LLM-based providers charge per token (input + output). Prices below are in *
 
 | Provider | Model | Input ($/1M) | Output ($/1M) |
 |---|---|---|---|
-| **Gemini** | 2.5 Flash-Lite | $0.01 | $0.04 |
-| | 3.1 Flash-Lite | $0.025 | $0.15 |
-| | 2.5 Flash | $0.03 | $0.25 |
-| | 3.5 Flash | $0.15 | $0.90 |
-| | 2.5 Pro | $0.125 | $1.00 |
-| **DeepSeek** | V4 Flash | $0.14 | $0.55 |
-| | V4 Pro | $0.27 | $1.10 |
+| **DeepSeek** | V4 Flash | $0.14 | $0.28 |
+| **Gemini** | 2.5 Flash-Lite | $0.10 | $0.40 |
 | **OpenAI** | gpt-4o-mini | $0.15 | $0.60 |
-| | gpt-5-mini | $0.25 | $2.00 |
-| | gpt-4o | $2.50 | $10.00 |
+| | gpt-5.4-nano | $0.20 | $1.25 |
+| **Gemini** | 3.1 Flash-Lite | $0.25 | $1.50 |
+| **OpenAI** | gpt-5-mini | $0.25 | $2.00 |
 | **Anthropic** | Claude Haiku 4.5 | $1.00 | $5.00 |
-| | Claude Sonnet 4.6 | $3.00 | $15.00 |
-| | Claude Opus 4.7 | $5.00 | $25.00 |
 
 **DeepL Free** — Free tier with 500,000 characters per month (~10 movies). No per-token billing.
 

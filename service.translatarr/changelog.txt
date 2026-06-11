@@ -1,3 +1,12 @@
+v2.5.8
+- Added Thinking Level control for Gemini 3.x models so you can choose how much the AI reasons before translating (Minimal/Low/Medium/High, defaults to Minimal for speed)
+- Added Reasoning Effort control for OpenAI GPT-5 models with the same Minimal-to-High levels, defaulting to Minimal
+- Simplified the Gemini model list to Gemini 3.1 Flash-Lite (now the default) and Gemini 2.5 Flash-Lite; removed older, more expensive Gemini options
+- Simplified the OpenAI model list and added GPT-5.4-nano as the new default, the cheapest GPT-5 class model for high-volume translation
+- Simplified Anthropic Claude to Haiku 4.5 only, the most cost-effective Claude model for translation
+- Updated DeepSeek to the latest V4 Flash model with corrected pricing
+- Verified and corrected pricing for all AI providers against their current official rates
+
 v2.5.7
 - Updated Family-Friendly and Natural style prompts so heavy profanity in source subtitles is still translated instead of causing providers to stop or refuse the chunk
 - Family-Friendly now asks providers to render profanity as mild, non-profane alternatives, while Natural keeps dialogue realistic without intensifying strong language

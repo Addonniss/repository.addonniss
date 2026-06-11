@@ -416,3 +416,19 @@ msgstr ""
 msgctxt "#30108"
 msgid "Number of previous source subtitle lines to include as read-only translation context. Allowed range is 3 to 8 lines."
 msgstr ""
+
+msgctxt "#30109"
+msgid "Thinking Level"
+msgstr ""
+
+msgctxt "#30110"
+msgid "Controls how much the Gemini 3.x model reasons before translating. Minimal is fastest and cheapest; High gives deepest reasoning. Does not apply to Gemini 2.5 models."
+msgstr ""
+
+msgctxt "#30111"
+msgid "Reasoning Effort"
+msgstr ""
+
+msgctxt "#30112"
+msgid "Controls how much the GPT-5 model reasons before translating. Minimal is fastest and cheapest; High gives deepest reasoning. Does not apply to GPT-4 models."
+msgstr ""
