@@ -1,3 +1,7 @@
+v2.5.9
+- Added OpenRouter provider support with custom model ID entry, custom base URL, and temperature control
+- Added support for free OpenRouter models such as deepseek/deepseek-v4-flash:free via editable text field instead of locked dropdown
+
 v2.5.8
 - Added Thinking Level control for Gemini 3.x models so you can choose how much the AI reasons before translating (Minimal/Low/Medium/High, defaults to Minimal for speed)
 - Added Reasoning Effort control for OpenAI GPT-5 models with the same Minimal-to-High levels, defaulting to Minimal

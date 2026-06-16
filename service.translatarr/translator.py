@@ -91,6 +91,8 @@ class BaseTranslator:
             setting_ids.append('temp_anthropic')
         elif provider == "DeepSeek":
             setting_ids.append('temp_deepseek')
+        elif provider == "OpenRouter":
+            setting_ids.append('temp_openrouter')
 
         # Backward compatibility for existing installs that already saved `temp`.
         setting_ids.append('temp')
@@ -635,6 +637,121 @@ class DeepSeekTranslator(BaseTranslator):
 
 
 # ==========================================================
+# OPENROUTER TRANSLATOR
+# ==========================================================
+class OpenRouterTranslator(BaseTranslator):
+
+    DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+
+    def __init__(self):
+        self.api_key = ADDON.getSetting('openrouter_api_key')
+        self.temperature = self._get_temperature("OpenRouter")
+
+        raw_model = (ADDON.getSetting('openrouter_custom_model') or '').strip()
+        self.model = raw_model if raw_model else "deepseek/deepseek-v4-flash:free"
+
+        raw_base_url = (ADDON.getSetting('openrouter_base_url') or '').strip()
+        self.base_url = raw_base_url if raw_base_url else self.DEFAULT_BASE_URL
+
+    def _get_endpoint(self):
+        return self.base_url.rstrip("/") + "/chat/completions"
+
+    def translate_batch(self, text_list, expected_count, context_list=None):
+
+        if not self.api_key:
+            log("OpenRouter API key missing")
+            return None, 0, 0
+
+        from languages import get_lang_params, get_active_language_setting
+        src_name, _ = get_lang_params(get_active_language_setting(ADDON, "OpenRouter", 'source'))
+        trg_name, _ = get_lang_params(get_active_language_setting(ADDON, "OpenRouter", 'target'))
+
+        if src_name.lower() != "auto-detect":
+            lang_instruction = f"Translate from {src_name} to {trg_name}."
+        else:
+            lang_instruction = f"Detect the source language and translate to {trg_name}."
+
+        prefixed = [f"L{i:03}: {t}" for i, t in enumerate(text_list)]
+        input_text = build_source_context_block(context_list) + "\n".join(prefixed)
+
+        style_block = build_style_instruction(trg_name)
+        localization_block = build_localization_instruction()
+
+        endpoint = self._get_endpoint()
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a professional subtitle localizer.\n"
+                        f"{lang_instruction}\n\n"
+                        "STRICT RULES (MANDATORY):\n"
+                        "1. Translate strictly line-by-line.\n"
+                        "2. Preserve 'Lxxx:' anchors EXACTLY.\n"
+                        f"3. Return EXACTLY {expected_count} lines.\n"
+                        "4. Return ONLY prefixed translated lines.\n"
+                        "5. Do NOT add commentary.\n\n"
+                        "6. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output.\n\n"
+                        f"{localization_block}\n"
+                        f"{style_block}"
+                    )
+                },
+                {"role": "user", "content": input_text}
+            ],
+            "temperature": self.temperature
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            r = requests.post(
+                endpoint,
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+
+            if r.status_code != 200:
+                log(f"OpenRouter error ({self.model}): {r.status_code} | {r.text[:500]}")
+                return None, 0, 0
+
+            data = r.json()
+            raw = (
+                data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+                .strip()
+            )
+
+            translated = self._scrub(raw, expected_count)
+            if not translated:
+                log("OpenRouter scrub failed")
+                return None, 0, 0
+
+            usage = data.get("usage", {})
+            in_t = usage.get("prompt_tokens", 0)
+            out_t = usage.get("completion_tokens", 0)
+
+            return translated, in_t, out_t
+
+        except Exception as e:
+            log(f"OpenRouter exception ({self.model}): {e}")
+            return None, 0, 0
+
+    def calculate_cost(self, input_tokens, output_tokens):
+        # OpenRouter pricing varies per model; report $0 for unknown models
+        return 0.0
+
+    def get_model_string(self):
+        return f"OpenRouter ({self.model})"
+
+
+# ==========================================================
 # DEEPL TRANSLATOR
 # ==========================================================
 class DeepLTranslator(BaseTranslator):
@@ -854,6 +971,8 @@ def _get_translator():
         return AnthropicTranslator()
     if provider == "DeepSeek":
         return DeepSeekTranslator()
+    if provider == "OpenRouter":
+        return OpenRouterTranslator()
     if provider == "DeepL":
         return DeepLTranslator()
     if provider == "LibreTranslate":

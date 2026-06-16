@@ -198,6 +198,7 @@ def get_active_language_setting(addon, provider, kind):
         "OpenAI": f"{kind}_lang_openai",
         "Anthropic": f"{kind}_lang_anthropic",
         "DeepSeek": f"{kind}_lang_deepseek",
+        "OpenRouter": f"{kind}_lang_openrouter",
         "LibreTranslate": f"libre_{kind}_lang",
     }
 

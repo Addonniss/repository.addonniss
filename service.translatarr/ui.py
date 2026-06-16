@@ -52,6 +52,18 @@ def show_stats_box(src_file, trg_file, trg_name, save_path,
         model_color = "mediumpurple"
         provider_badge = "[Gemini]"
         usage_label = "Total Tokens"
+    elif "openrouter" in model_name.lower():
+        model_color = "cornflowerblue"
+        provider_badge = "[OpenRouter]"
+        usage_label = "Total Tokens"
+    elif "anthropic" in model_name.lower():
+        model_color = "darkgoldenrod"
+        provider_badge = "[Anthropic]"
+        usage_label = "Total Tokens"
+    elif "deepseek" in model_name.lower():
+        model_color = "dodgerblue"
+        provider_badge = "[DeepSeek]"
+        usage_label = "Total Tokens"
     elif "deepl" in model_name.lower():
         model_color = "darkorange"
         provider_badge = "[DeepL]"
@@ -101,6 +113,12 @@ class TranslationProgress:
         # Provider badge
         if "gemini" in self.model_name:
             self.provider = "Gemini"
+        elif "anthropic" in self.model_name:
+            self.provider = "Anthropic"
+        elif "deepseek" in self.model_name:
+            self.provider = "DeepSeek"
+        elif "openrouter" in self.model_name:
+            self.provider = "OpenRouter"
         elif "deepl" in self.model_name:
             self.provider = "DeepL"
         elif "libretranslate" in self.model_name:

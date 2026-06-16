@@ -432,3 +432,27 @@ msgstr ""
 msgctxt "#30112"
 msgid "Controls how much the GPT-5 model reasons before translating. Minimal is fastest and cheapest; High gives deepest reasoning. Does not apply to GPT-4 models."
 msgstr ""
+
+msgctxt "#30113"
+msgid "OpenRouter API Key"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Enter your OpenRouter API key from openrouter.ai/keys."
+msgstr ""
+
+msgctxt "#30115"
+msgid "OpenRouter Model"
+msgstr ""
+
+msgctxt "#30116"
+msgid "Enter any OpenRouter model ID, e.g., deepseek/deepseek-v4-flash:free"
+msgstr ""
+
+msgctxt "#30117"
+msgid "OpenRouter Base URL (Optional)"
+msgstr ""
+
+msgctxt "#30118"
+msgid "Leave empty to use https://openrouter.ai/api/v1. Only override if you use a custom proxy or self-hosted gateway."
+msgstr ""
