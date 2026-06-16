@@ -73,7 +73,7 @@
         </assets>
     </extension>
 </addon>
-<addon id="service.translatarr" name="Translatarr" version="2.5.8" provider-name="Addonniss">
+<addon id="service.translatarr" name="Translatarr" version="2.5.9" provider-name="Addonniss">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.requests" version="2.25.1"/>
@@ -83,8 +83,8 @@
         <provides>executable</provides>
     </extension>
     <extension point="kodi.addon.metadata">
-        <summary lang="en_GB">Subtitle Translator using Gemini, OpenAI, Anthropic Claude, DeepSeek, DeepL Free, or LibreTranslate</summary>
-        <description lang="en_GB">Automatically detects and translates movie subtitles into your preferred language using Gemini, OpenAI, Anthropic Claude, DeepSeek, DeepL Free machine translation, or LibreTranslate. LibreTranslate adds a free self-hosted offline or home-network translation option, giving users more privacy, LAN-speed access, and independence from paid cloud APIs.</description>
+        <summary lang="en_GB">Subtitle Translator using Gemini, OpenAI, Anthropic Claude, DeepSeek, OpenRouter, DeepL Free, or LibreTranslate</summary>
+        <description lang="en_GB">Automatically detects and translates movie subtitles into your preferred language using Gemini, OpenAI, Anthropic Claude, DeepSeek, OpenRouter, DeepL Free machine translation, or LibreTranslate. OpenRouter adds support for hundreds of models including free tiers (like DeepSeek V4 Flash), letting you type any custom model ID. LibreTranslate adds a free self-hosted offline or home-network translation option, giving users more privacy, LAN-speed access, and independence from paid cloud APIs.</description>
         <platform>all</platform>
         <license>GPL-2.0-only</license>
         <assets>
