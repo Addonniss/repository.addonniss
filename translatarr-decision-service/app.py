@@ -43,7 +43,9 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
 GEMINI_TEMPERATURE = float(os.environ.get("GEMINI_TEMPERATURE", "0.1"))
 GEMINI_TOP_P = float(os.environ.get("GEMINI_TOP_P", "0.95"))
-GEMINI_FAST_MODE = os.environ.get("GEMINI_FAST_MODE", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+GEMINI_THINKING_MAP = {"Minimal": "minimal", "Low": "low", "Medium": "medium", "High": "high"}
+GEMINI_THINKING_LEVEL = GEMINI_THINKING_MAP.get(os.environ.get("GEMINI_THINKING_LEVEL", "Minimal").strip(), "minimal")
 LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "").strip().rstrip("/")
 LIBRETRANSLATE_API_KEY = os.environ.get("LIBRETRANSLATE_API_KEY", "").strip()
 LIBRETRANSLATE_SOURCE = os.environ.get("LIBRETRANSLATE_SOURCE", "en").strip()
@@ -61,7 +63,6 @@ SRT_TIME_RE = re.compile(
 
 MODEL_PRICING = {
     "gemini-3.1-flash-lite": {"input": 0.25, "output": 1.50, "thought": 0.00},
-    "gemini-2.5-flash": {"input": 0.30, "output": 2.50, "thought": 0.00},
     "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40, "thought": 0.00},
 }
 
@@ -370,8 +371,8 @@ def scrub_prefixed_lines(raw_text: str, expected_count: int) -> Optional[List[st
     return cleaned
 
 
-def is_gemini_fast_mode() -> bool:
-    return TRANSLATION_PROVIDER == "gemini" and GEMINI_MODEL == "gemini-2.5-flash" and GEMINI_FAST_MODE
+def is_gemini3() -> bool:
+    return GEMINI_MODEL.startswith("gemini-3")
 
 
 def calculate_translation_cost(input_count: int, output_count: int) -> float:
@@ -387,8 +388,8 @@ def calculate_translation_cost(input_count: int, output_count: int) -> float:
 def get_billing_label() -> str:
     if TRANSLATION_PROVIDER == "libretranslate":
         return "LibreTranslate"
-    if is_gemini_fast_mode():
-        return "{0}-fast".format(GEMINI_MODEL)
+    if is_gemini3():
+        return "Gemini ({0}, think={1})".format(GEMINI_MODEL, GEMINI_THINKING_LEVEL)
     return GEMINI_MODEL
 
 
@@ -458,12 +459,11 @@ def gemini_translate_lines(text_list: List[str], expected_count: int, context_li
         "{2}\n"
         "{3}\n"
         "### RULES\n"
-        "1. Translate line-by-line.\n"
-        "2. Preserve 'Lxxx:' prefix.\n"
-        "3. Return exactly {4} lines.\n"
-        "4. Preserve [BR] markers exactly where subtitle line breaks belong.\n"
-        "5. Return ONLY prefixes and translation.\n"
-        "6. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output."
+        "1. Preserve 'Lxxx:' prefix.\n"
+        "2. Return exactly {4} lines.\n"
+        "3. Preserve [BR] markers exactly where subtitle line breaks belong.\n"
+        "4. Return ONLY prefixes and translation.\n"
+        "5. If read-only Cxxx source context is provided, use it for meaning only and never include it in the output."
     ).format(
         SOURCE_LANGUAGE_NAME,
         TARGET_LANGUAGE_NAME,
@@ -479,8 +479,8 @@ def gemini_translate_lines(text_list: List[str], expected_count: int, context_li
                 "temperature": GEMINI_TEMPERATURE,
                 "top_p": GEMINI_TOP_P,
             }
-            if is_gemini_fast_mode():
-                config["thinking_config"] = {"thinking_budget": 0}
+            if is_gemini3():
+                config["thinking_config"] = {"thinking_level": GEMINI_THINKING_LEVEL}
 
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
@@ -964,7 +964,7 @@ def queue_job(source: str, payload: Dict[str, Any]) -> TriggerResponse:
 
 @app.get("/health")
 def health() -> Dict[str, Any]:
-    return {
+    result = {
         "ok": True,
         "service": "translatarr-decision-service",
         "delay_seconds": DELAY_SECONDS,
@@ -976,6 +976,11 @@ def health() -> Dict[str, Any]:
         "save_source_subtitle": SAVE_SOURCE_SUBTITLE,
         "protect_saved_subtitles": PROTECT_SAVED_SUBTITLES,
     }
+    if TRANSLATION_PROVIDER == "gemini":
+        result["gemini_model"] = GEMINI_MODEL
+        if is_gemini3():
+            result["gemini_thinking_level"] = GEMINI_THINKING_LEVEL
+    return result
 
 
 @app.get("/jobs")
