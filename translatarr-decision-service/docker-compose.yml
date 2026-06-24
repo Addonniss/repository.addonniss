@@ -30,12 +30,14 @@ services:
       ROLLING_SOURCE_CONTEXT_ENABLED: "false"
       ROLLING_SOURCE_CONTEXT_WINDOW: "5"
       GEMINI_API_KEY: "CHANGE_ME"
+      # Supported models: gemini-3.1-flash-lite, gemini-2.5-flash-lite
       GEMINI_MODEL: "gemini-2.5-flash-lite"
       GEMINI_TEMPERATURE: "0.15"
       GEMINI_TOP_P: "0.95"
-      # GEMINI_FAST_MODE only applies to gemini-2.5-flash.
-      # false = normal model behavior; true = request thinking_budget 0 for faster/cheaper 2.5 Flash calls.
-      GEMINI_FAST_MODE: "false"
+      # GEMINI_THINKING_LEVEL only applies to gemini-3.x models.
+      # 2.5-flash-lite has thinking OFF by default and does not accept this setting.
+      # Options: Minimal (default), Low, Medium, High
+      GEMINI_THINKING_LEVEL: "Minimal"
       LIBRETRANSLATE_URL: ""
       LIBRETRANSLATE_API_KEY: ""
       LIBRETRANSLATE_SOURCE: "en"

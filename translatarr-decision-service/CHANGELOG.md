@@ -3,6 +3,15 @@
 ## Unreleased
 
 ### Added
+- Added `GEMINI_THINKING_LEVEL` environment variable with thinking map (Minimal → minimal, Low → low, Medium → medium, High → high), applied to Gemini 3.x models via `thinking_config.thinking_level`
+- Added Gemini model and thinking level to the `/health` endpoint when the provider is Gemini
+- Added thinking-level-aware billing label for Gemini 3.x models (e.g., `Gemini (gemini-3.1-flash-lite, think=minimal)`)
+
+### Changed
+- Removed `GEMINI_FAST_MODE` and the `thinking_budget: 0` workaround for Gemini 2.5 Flash — superseded by `GEMINI_THINKING_LEVEL`
+- Removed `gemini-2.5-flash` from `MODEL_PRICING`; only `gemini-3.1-flash-lite` and `gemini-2.5-flash-lite` remain
+
+### Added (previous)
 - Added optional rolling source context for Gemini and LibreTranslate translation batches, controlled by `ROLLING_SOURCE_CONTEXT_ENABLED`
 - Added `ROLLING_SOURCE_CONTEXT_WINDOW` with the same 3 to 8 previous-line limits and default-off behavior as `service.translatarr`
 - Kept rolling context out of parsed subtitle output by labeling context as `Cxxx:` lines and accepting only translated `Lxxx:` lines

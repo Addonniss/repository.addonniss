@@ -135,12 +135,14 @@ services:
       ROLLING_SOURCE_CONTEXT_WINDOW: "5"
 
       GEMINI_API_KEY: "replace-with-your-key"
+      # Supported models: gemini-3.1-flash-lite, gemini-2.5-flash-lite
       GEMINI_MODEL: "gemini-2.5-flash-lite"
       GEMINI_TEMPERATURE: "0.15"
       GEMINI_TOP_P: "0.95"
-      # GEMINI_FAST_MODE only applies to gemini-2.5-flash.
-      # false = normal model behavior; true = request thinking_budget 0 for faster/cheaper 2.5 Flash calls.
-      GEMINI_FAST_MODE: "false"
+      # GEMINI_THINKING_LEVEL only applies to gemini-3.x models.
+      # 2.5-flash-lite has thinking OFF by default and does not accept this setting.
+      # Options: Minimal (default), Low, Medium, High
+      GEMINI_THINKING_LEVEL: "Minimal"
 
       LIBRETRANSLATE_URL: ""
       LIBRETRANSLATE_API_KEY: ""
@@ -217,16 +219,15 @@ docker compose up -d --build
 - `GEMINI_API_KEY`
   - required when `TRANSLATION_PROVIDER=gemini`
 - `GEMINI_MODEL`
-  - supported: `gemini-3.1-flash-lite`, `gemini-2.5-flash-lite`, `gemini-2.5-flash`
+  - supported: `gemini-3.1-flash-lite`, `gemini-2.5-flash-lite`
   - default: `gemini-2.5-flash-lite`
 - `GEMINI_TEMPERATURE`
   - default: `0.1`
 - `GEMINI_TOP_P`
   - default: `0.95`
-- `GEMINI_FAST_MODE`
-  - only applies to `gemini-2.5-flash`
-  - `false` means normal model behavior
-  - `true` requests `thinking_budget=0` for faster/cheaper 2.5 Flash calls
+- `GEMINI_THINKING_LEVEL`
+  - only applies to `gemini-3.x` models; `gemini-2.5-flash-lite` has thinking off by default
+  - options: `Minimal` (default), `Low`, `Medium`, `High`
 - `LIBRETRANSLATE_URL`
   - required when `TRANSLATION_PROVIDER=libretranslate`
   - example: `http://your-libretranslate-host:5000`
