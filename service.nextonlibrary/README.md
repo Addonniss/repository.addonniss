@@ -1,9 +1,10 @@
 # Skip.Intro.Next (S.I.N.)
 
-`service.nextonlibrary` is a Kodi service add-on that adds two lightweight playback helpers:
+`service.nextonlibrary` is a Kodi service add-on that adds three lightweight playback helpers:
 
 - `Skip Intro`
 - `Next On`
+- `Stinger`
 
 ## Current Behavior
 
@@ -19,12 +20,19 @@ The add-on can use both local chapter markers and online metadata.
   - online metadata from `IntroDB.app`
   - local chapter markers near the end of playback
   - a fallback percentage trigger
+- `Stinger` can use:
+  - online metadata from `TMDB`
+  - online metadata from `AfterCredits.com`
+  - online metadata from `Wikipedia` (list of films with post-credits scenes)
+  - local chapter markers near the end of playback
+  - a fallback percentage trigger
 
 ## What It Does
 
 - Monitors TV-show playback in Kodi
 - Shows a `Skip Intro` overlay with a draining pill outline when an intro or recap end can be determined
-- Shows a `Next` overlay near the end of playback
+- Shows a `Next` overlay near the end of TV episode playback
+- Shows a `Stinger` overlay near the end of movie playback when a mid-credits or post-credits scene is detected
 - Can optionally auto-play the next library episode after a configurable delay that follows the existing prompt dismiss behavior
 - Can optionally auto-skip intros after a configurable delay
 - Uses simple on-screen overlay buttons instead of a heavy custom interface
@@ -37,6 +45,8 @@ The add-on can use both local chapter markers and online metadata.
 - `Skip Intro` does not run for movies.
 - `Next On` works only for Kodi library episodes, because it needs Kodi library data to find and play the next episode.
 - `Next On` does not run for movies, streams, or non-library items.
+- `Stinger` works for movie playback only. It queries TMDB, AfterCredits.com, and Wikipedia to detect mid-credits and post-credits scenes.
+- `Stinger` does not run for TV shows.
 
 ## Settings
 
@@ -75,6 +85,18 @@ Default behavior:
 
 When auto-skip is enabled, `Auto-skip Delay` accepts `0` to `10` seconds and defaults to `2`. A value of `0` skips immediately when the Skip Intro prompt would appear. Values from `1` to `10` show the `Skip Intro` button with a filling pill progress overlay before skipping. Select skips immediately; other remote or keyboard actions cancel the prompt.
 
+### Stinger
+
+- `Enable Stinger Alerts`
+- `Stinger Trigger Percent`
+
+Default behavior:
+- `Enable Stinger Alerts` is `On`
+- TMDB, AfterCredits.com, and Wikipedia are queried automatically under the hood
+- the alert appears at the last chapter marker when available
+- falls back to the configured percentage trigger (default 85%) when no chapter markers exist
+- no alert appears if none of the databases detect a post-credits scene — the user can safely stop playback
+
 ### Advanced
 
 - `Enable Debug Logging`
@@ -84,13 +106,22 @@ When auto-skip is enabled, `Auto-skip Delay` accepts `0` to `10` seconds and def
 
 The add-on currently uses:
 
-- `TheIntroDB`
-- `IntroDB.app`
+- `TheIntroDB` — TV episode intro/recap/credits/outro markers
+- `IntroDB.app` — TV episode intro/recap/outro markers
+- `TMDB` — movie keyword tags for mid-credits and post-credits stinger scenes
+- `AfterCredits.com` — detailed movie stinger classifications, bloopers, and sequel setups
+- `Wikipedia` — fallback list of films with post-credits scenes
 
 For TV episode lookups:
 
 - `TheIntroDB` is queried with `tmdb_id`, `season`, and `episode`
 - `IntroDB.app` is queried with the show `imdb_id`, `season`, and `episode`
+
+For movie stinger lookups:
+
+- `TMDB` is queried with the movie's TMDB ID (resolved from IMDb if needed), checking for `duringcreditsstinger` and `aftercreditsstinger` keyword tags
+- `AfterCredits.com` is queried by movie title and year, with category-based classification for narrative stingers, bloopers, and sequel setups
+- `Wikipedia` crawls the "List of films with post-credits scenes" page and matches by movie title
 
 ## API Limits
 
@@ -114,6 +145,18 @@ The API also documents response headers for both rate and usage limits:
 ### IntroDB.app
 
 This repository currently documents the lookup format used by the add-on, but not a published rate-limit policy for `IntroDB.app`.
+
+### TMDB
+
+Stinger lookups use a public community API key. Rate limits are shared with other applications using the same key, so query volume is kept to a minimum — one keyword lookup per movie, cached for the session.
+
+### AfterCredits.com
+
+WordPress REST API with no documented rate-limit policy. Queries are limited to one search per movie, cached for the session.
+
+### Wikipedia
+
+Single page fetch on first use to build an in-memory index, cached for the session. No rate-limit concerns under normal Kodi usage.
 
 ## Notes
 

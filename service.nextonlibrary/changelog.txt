@@ -1,3 +1,9 @@
+1.1.0
+- Added Stinger alerts for movies: detects mid-credits and post-credits scenes using TMDB, AfterCredits.com, and Wikipedia
+- Stinger alert appears near the end of movie playback when a post-credits scene is detected; no alert means the user can safely stop
+- Stinger uses the last chapter marker for timing, with a configurable percentage fallback (default 85%)
+- Stinger is enabled by default with no configuration needed — all databases query automatically under the hood
+
 1.0.4
 - Reworked the overlay countdown animation into a smooth contour around the Skip Intro and Next On buttons
 - Added an Advanced setting to choose the global contour color: blue, green, purple, orange, pink, or red

@@ -118,6 +118,29 @@
             </group>
         </category>
 
+        <category id="stinger" label="30048">
+            <group id="stinger_group">
+                <setting id="enable_stinger_movies" type="boolean" label="30049" help="30050">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>true</default>
+                </setting>
+
+                <setting id="stinger_trigger_percent" type="integer" label="30057" help="30058">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>50</minimum>
+                        <maximum>99</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>85</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_stinger_movies">true</dependency>
+                    </dependencies>
+                </setting>
+            </group>
+        </category>
+
         <category id="advanced" label="30029">
             <group id="advanced_group" label="30029">
                 <setting id="debug_logging" type="boolean" label="30007" help="30008">

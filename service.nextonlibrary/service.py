@@ -26,6 +26,14 @@ ACTION_MOUSE_DRAG = 106
 OS_MACHINE = machine()
 THEINTRODB_BASE_URL = "https://api.theintrodb.org/v2/media"
 INTRODB_SEGMENTS_URL = "http://api.introdb.app/segments"
+TMDB_API_URL = "https://api.themoviedb.org/3"
+TMDB_API_KEY = "a07324c669cac4d96789197134ce272b"
+AFTERCREDITS_SEARCH_URL = "https://aftercredits.com/wp-json/wp/v2/posts"
+WIKIPEDIA_STINGER_URL = (
+    "https://en.wikipedia.org/w/api.php?action=parse"
+    "&page=List_of_films_with_post-credits_scenes"
+    "&prop=text&format=json&utf8=1"
+)
 REMOTE_LOOKUP_TIMEOUT = 5
 AUTO_PLAY_PROGRESS_FRAME_COUNT = 91
 IDLE_POLL_INTERVAL = 1.0
@@ -215,6 +223,9 @@ class NextOnLibraryService(xbmc.Monitor):
         self.auto_play_session_file = ""
         self.auto_play_episode_id = None
         self.overlay_progress_frame_index = None
+        self.current_movie = None
+        self.stinger_result = None
+        self.stinger_queried = False
 
     def close_overlay(self):
         if not self.overlay:
@@ -279,6 +290,8 @@ class NextOnLibraryService(xbmc.Monitor):
                 continue
 
             if not self.current_episode:
+                if self.current_movie and get_setting_bool("enable_stinger_movies"):
+                    self.handle_movie_stinger(current_time, total_time)
                 continue
 
             if self.auto_play_active:
@@ -333,6 +346,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.current_file = current_file
         self.current_item = item
         self.current_episode = self.get_library_episode(item)
+        self.current_movie = self.get_library_movie(item)
         self.skip_intro_allowed = self.is_tv_show_playback(item)
         self.next_episode = None
         self.chapter_starts, self.chapter_percents = self.get_chapter_markers()
@@ -344,6 +358,8 @@ class NextOnLibraryService(xbmc.Monitor):
         self.next_trigger_source = None
         self.next_overlay_dismissed = False
         self.prompted = False
+        self.stinger_result = None
+        self.stinger_queried = False
         self.overlay_action = None
         self.cancel_auto_play(log_message=False)
 
@@ -359,6 +375,14 @@ class NextOnLibraryService(xbmc.Monitor):
                     self.current_episode.get("showtitle", ""),
                     int(self.current_episode.get("season", 0)),
                     int(self.current_episode.get("episode", 0)),
+                    chapter_info,
+                ),
+                xbmc.LOGDEBUG,
+            )
+        elif self.current_movie:
+            log(
+                "Tracking movie '%s', chapters=%s" % (
+                    self.current_movie.get("title", self.current_movie.get("label", "")),
                     chapter_info,
                 ),
                 xbmc.LOGDEBUG,
@@ -447,6 +471,21 @@ class NextOnLibraryService(xbmc.Monitor):
         if item.get("showtitle"):
             return True
         return self.parse_int(item.get("season")) is not None or self.parse_int(item.get("episode")) is not None
+
+    def get_library_movie(self, item):
+        if not item:
+            return None
+        if item.get("type") != "movie":
+            return None
+        movie_id = item.get("id") or item.get("movieid")
+        if not movie_id:
+            return None
+        return item
+
+    def is_movie_playback(self, item):
+        if not item:
+            return False
+        return item.get("type") == "movie"
 
     def get_chapter_markers(self):
         starts = self.get_chapter_starts_from_jsonrpc()
@@ -1232,6 +1271,333 @@ class NextOnLibraryService(xbmc.Monitor):
         log("Next On remote timing lookup exhausted all sources", xbmc.LOGDEBUG)
         return None
 
+    def fetch_stinger_from_tmdb(self):
+        tmdb_id = self.get_playback_tmdb_id()
+        if not tmdb_id:
+            imdb_id = self.get_playback_imdb_id()
+            if not imdb_id:
+                log("Stinger TMDB lookup skipped: no TMDB or IMDb id available", xbmc.LOGDEBUG)
+                return None
+
+            find_payload = self.fetch_remote_json(
+                "%s/find/%s?external_source=imdb_id&api_key=%s" % (
+                    TMDB_API_URL, imdb_id, TMDB_API_KEY,
+                ),
+                "TMDB Stinger",
+            )
+            if not isinstance(find_payload, dict):
+                return None
+            movie_results = find_payload.get("movie_results", [])
+            if not movie_results or not isinstance(movie_results, list):
+                return None
+            first = movie_results[0]
+            if not isinstance(first, dict):
+                return None
+            tmdb_id = first.get("id")
+            if not tmdb_id:
+                return None
+
+        keywords_payload = self.fetch_remote_json(
+            "%s/movie/%s/keywords?api_key=%s" % (
+                TMDB_API_URL, int(tmdb_id), TMDB_API_KEY,
+            ),
+            "TMDB Stinger",
+        )
+        if not isinstance(keywords_payload, dict):
+            return None
+
+        keywords = keywords_payload.get("keywords") or []
+        has_mid = False
+        has_post = False
+        has_bloopers = False
+        for kw in keywords:
+            name = (kw.get("name") or "").lower()
+            if "duringcreditsstinger" in name:
+                has_mid = True
+            if "aftercreditsstinger" in name:
+                has_post = True
+            if "blooper" in name or "outtake" in name:
+                has_bloopers = True
+            if has_mid and has_post and has_bloopers:
+                break
+
+        if not has_mid and not has_post and not has_bloopers:
+            log("Stinger TMDB lookup found no relevant keywords", xbmc.LOGDEBUG)
+            return None
+
+        result = {
+            "mid": has_mid,
+            "post": has_post,
+            "bloopers": has_bloopers,
+            "source": "TMDB",
+            "definitive": True,
+        }
+        log(
+            "Stinger TMDB result -> mid=%s post=%s bloopers=%s" % (
+                has_mid, has_post, has_bloopers,
+            ),
+            xbmc.LOGDEBUG,
+        )
+        return result
+
+    def fetch_stinger_from_aftercredits(self):
+        movie = self.current_movie
+        if not movie:
+            return None
+        title = (movie.get("title") or "").strip()
+        if not title:
+            return None
+
+        search_query = title
+        year = movie.get("year")
+        if year:
+            search_query = "%s %s" % (title, year)
+
+        payload = self.fetch_remote_json(
+            "%s?%s" % (
+                AFTERCREDITS_SEARCH_URL,
+                urlencode({
+                    "search": search_query,
+                    "_fields": "id,title,link",
+                    "per_page": "10",
+                }),
+            ),
+            "AfterCredits Stinger",
+        )
+        if not isinstance(payload, list) or not payload:
+            if year:
+                log("AfterCredits Stinger no results with year, retrying without year", xbmc.LOGDEBUG)
+                payload = self.fetch_remote_json(
+                    "%s?%s" % (
+                        AFTERCREDITS_SEARCH_URL,
+                        urlencode({
+                            "search": title,
+                            "_fields": "id,title,link",
+                            "per_page": "10",
+                        }),
+                    ),
+                    "AfterCredits Stinger",
+                )
+            if not isinstance(payload, list) or not payload:
+                log("AfterCredits Stinger no search results", xbmc.LOGDEBUG)
+                return None
+
+        best = None
+        cleaned_title = " ".join(title.lower().split())
+        for post in payload:
+            if not isinstance(post, dict):
+                continue
+            raw_title = (post.get("title", {}) or {}).get("rendered", "") if isinstance(post.get("title"), dict) else ""
+            raw_title = (raw_title or "").lower().strip()
+            if not raw_title:
+                continue
+            if cleaned_title in raw_title or raw_title in cleaned_title:
+                best = post
+                if "review" not in raw_title:
+                    break
+
+        if not best:
+            log("AfterCredits Stinger no title match", xbmc.LOGDEBUG)
+            return None
+
+        post_id = best.get("id")
+        if not post_id:
+            return None
+
+        detail_payload = self.fetch_remote_json(
+            "%s/%s?%s" % (
+                AFTERCREDITS_SEARCH_URL,
+                int(post_id),
+                urlencode({
+                    "_fields": "content,_links,_embedded",
+                    "_embed": "wp:term",
+                }),
+            ),
+            "AfterCredits Stinger detail",
+        )
+        if not isinstance(detail_payload, dict):
+            return None
+
+        categories = set()
+        embedded = detail_payload.get("_embedded") or {}
+        for taxonomy in (embedded.get("wp:term") or []):
+            if not isinstance(taxonomy, list):
+                continue
+            for term in taxonomy:
+                name = (term.get("name") or "").lower().strip() if isinstance(term, dict) else ""
+                if name:
+                    categories.add(name)
+
+        if "non-stingers" in categories:
+            log("AfterCredits Stinger result -> non-stingers (definitive negative)", xbmc.LOGDEBUG)
+            return {"mid": False, "post": False, "bloopers": False, "source": "AfterCredits", "definitive": True}
+
+        if "unknown" in categories:
+            log("AfterCredits Stinger result -> unknown", xbmc.LOGDEBUG)
+            return None
+
+        has_mid = "both during & after credits" in categories or "during credits" in categories
+        has_post = "both during & after credits" in categories or "after credits" in categories
+        has_bloopers = any(
+            tag in categories
+            for tag in ("bloopers", "outtakes", "gag reel", "behind the scenes")
+        )
+        has_sequel = "sequel setup" in categories
+
+        if not has_mid and not has_post and not categories:
+            log("AfterCredits Stinger no categories parsed", xbmc.LOGDEBUG)
+            return None
+
+        result = {
+            "mid": has_mid,
+            "post": has_post,
+            "bloopers": has_bloopers,
+            "sequel": has_sequel,
+            "source": "AfterCredits",
+            "definitive": True,
+        }
+        log(
+            "Stinger AfterCredits result -> mid=%s post=%s bloopers=%s sequel=%s" % (
+                has_mid, has_post, has_bloopers, has_sequel,
+            ),
+            xbmc.LOGDEBUG,
+        )
+        return result
+
+    def fetch_stinger_from_wikipedia(self):
+        cache_key = "wikipedia_stinger_index"
+        if cache_key not in self.remote_intro_cache:
+            payload = self.fetch_remote_json(WIKIPEDIA_STINGER_URL, "Wikipedia Stinger index")
+            if not isinstance(payload, dict):
+                self.remote_intro_cache[cache_key] = {}
+                return None
+
+            text = (payload.get("parse") or {}).get("text", {}).get("*", "") if isinstance(payload.get("parse"), dict) else ""
+            if not text:
+                self.remote_intro_cache[cache_key] = {}
+                return None
+
+            index = {}
+            table_pattern = re.compile(r'<table[^>]*class="wikitable[^"]*"[^>]*>(.*?)</table>', re.DOTALL | re.IGNORECASE)
+            for table_match in table_pattern.finditer(text):
+                table_html = table_match.group(0)
+                rows = re.findall(r'<tr>(.*?)</tr>', table_html, re.DOTALL | re.IGNORECASE)
+                for row in rows:
+                    cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', row, re.DOTALL | re.IGNORECASE)
+                    if len(cells) < 2:
+                        continue
+                    title_text = re.sub(r'<[^>]+>', '', cells[1]).strip()
+                    if not title_text:
+                        continue
+                    row_text = re.sub(r'<[^>]+>', '', row).lower()
+
+                    mid_regex = r'\b(mid-|during|throughout|overlay|alongside|while the credits|accompany.*credits|as.*credits roll|before.*credits roll|during.*titles|throughout.*titles|credits crawl|credits scroll)\b'
+                    post_regex = r'\b(post-|after|following|follows|at the end|very end|once the credits|final scene|last scene|after the final|after the end titles|ends with|concludes with)\b'
+                    blooper_regex = r'\b(bloopers?|outtakes?|gags?|gag reel|behind-the-scenes)\b'
+
+                    has_mid = bool(re.search(mid_regex, row_text))
+                    has_post = bool(re.search(post_regex, row_text))
+                    has_bloopers = bool(re.search(blooper_regex, row_text))
+
+                    clean_title = re.sub(r'[^a-z0-9]', '', title_text.lower())
+                    if clean_title:
+                        index[clean_title] = {
+                            "mid": has_mid,
+                            "post": has_post,
+                            "bloopers": has_bloopers,
+                        }
+
+            self.remote_intro_cache[cache_key] = index
+            log("Wikipedia Stinger index built with %d entries" % len(index), xbmc.LOGDEBUG)
+
+        wiki_index = self.remote_intro_cache.get(cache_key, {})
+        if not wiki_index:
+            return None
+
+        movie = self.current_movie
+        if not movie:
+            return None
+        title = (movie.get("title") or "").strip()
+        if not title:
+            return None
+
+        clean_title = re.sub(r'[^a-z0-9]', '', title.lower())
+        entry = wiki_index.get(clean_title)
+        if not entry:
+            log("Stinger Wikipedia no match for '%s'" % title, xbmc.LOGDEBUG)
+            return None
+
+        result = {
+            "mid": entry.get("mid", False),
+            "post": entry.get("post", False),
+            "bloopers": entry.get("bloopers", False),
+            "source": "Wikipedia",
+            "definitive": False,
+        }
+        log(
+            "Stinger Wikipedia result -> mid=%s post=%s bloopers=%s" % (
+                result["mid"], result["post"], result["bloopers"],
+            ),
+            xbmc.LOGDEBUG,
+        )
+        return result
+
+    def get_stinger_info(self):
+        if not get_setting_bool("enable_stinger_movies"):
+            return None
+
+        if not self.current_movie:
+            return None
+
+        cache_key = ("stinger", self.current_file)
+        if cache_key in self.remote_intro_cache:
+            return self.remote_intro_cache[cache_key]
+
+        sources = [
+            ("tmdb", self.fetch_stinger_from_tmdb),
+            ("aftercredits", self.fetch_stinger_from_aftercredits),
+            ("wikipedia", self.fetch_stinger_from_wikipedia),
+        ]
+
+        merged = None
+        for source_name, fetcher in sources:
+            log("Stinger trying source -> %s" % source_name, xbmc.LOGDEBUG)
+            result = fetcher()
+            if result and result.get("definitive"):
+                self.remote_intro_cache[cache_key] = result
+                return result
+            if result:
+                if merged is None:
+                    merged = dict(result)
+                else:
+                    if result.get("mid"):
+                        merged["mid"] = True
+                    if result.get("post"):
+                        merged["post"] = True
+                    if result.get("bloopers"):
+                        merged["bloopers"] = True
+                    if result.get("sequel"):
+                        merged["sequel"] = True
+                    if result.get("definitive"):
+                        merged["definitive"] = True
+
+        if merged:
+            merged["source"] = "Aggregated"
+            self.remote_intro_cache[cache_key] = merged
+            return merged
+
+        self.remote_intro_cache[cache_key] = None
+        log("Stinger lookup exhausted all sources with no results", xbmc.LOGDEBUG)
+        return None
+
+    def get_stinger_trigger_time(self, total_time):
+        chapter_trigger = self.get_last_chapter_trigger(total_time)
+        if chapter_trigger is not None:
+            return chapter_trigger
+
+        fallback_percent = get_setting_int("stinger_trigger_percent", default=85, minimum=50, maximum=99)
+        return max(1.0, total_time * (fallback_percent / 100.0))
+
     def calculate_trigger_time(self, total_time):
         online_metadata_priority = get_setting_bool("online_next_metadata_priority")
         if not self.logged_next_preferences:
@@ -1626,6 +1992,44 @@ class NextOnLibraryService(xbmc.Monitor):
         self.show_overlay("next_episode")
         log("Displayed Next overlay for episode %s" % episode.get("episodeid"), xbmc.LOGDEBUG)
 
+    def handle_movie_stinger(self, current_time, total_time):
+        if not self.current_movie:
+            return
+
+        if self.stinger_queried and self.stinger_result is None:
+            return
+
+        if self.prompted or self.overlay_action == "stinger":
+            return
+
+        if self.overlay:
+            return
+
+        if not self.stinger_queried:
+            self.stinger_result = self.get_stinger_info()
+            self.stinger_queried = True
+
+        if self.stinger_result is None:
+            return
+
+        has_any = self.stinger_result.get("mid") or self.stinger_result.get("post")
+        if not has_any:
+            log("Stinger databases report no post-credits scene for this movie", xbmc.LOGDEBUG)
+            return
+
+        trigger_time = self.get_stinger_trigger_time(total_time)
+        if current_time < trigger_time:
+            return
+
+        self.prompt_for_stinger()
+
+    def prompt_for_stinger(self):
+        self.prompted = True
+        self.show_overlay("stinger")
+        log("Displayed Stinger overlay for movie '%s'" % (
+            (self.current_movie or {}).get("title", ""),
+        ), xbmc.LOGDEBUG)
+
     def start_auto_play_countdown(self, episode, delay, update_progress=True):
         self.auto_play_active = True
         self.auto_play_started_at = monotonic()
@@ -1763,6 +2167,8 @@ class NextOnLibraryService(xbmc.Monitor):
     def get_overlay_label(self):
         if self.overlay_action == "skip_intro":
             return localize(30017)
+        if self.overlay_action == "stinger":
+            return localize(30059)
         return localize(30011)
 
     def get_overlay_xml(self):
@@ -1771,6 +2177,10 @@ class NextOnLibraryService(xbmc.Monitor):
     def handle_overlay_action(self):
         if self.overlay_action == "skip_intro":
             self.seek_skip_intro()
+            return
+        if self.overlay_action == "stinger":
+            self.close_overlay()
+            log("Stinger overlay dismissed by user click", xbmc.LOGDEBUG)
             return
         if self.auto_play_active:
             started_at = self.auto_play_started_at
@@ -1788,6 +2198,8 @@ class NextOnLibraryService(xbmc.Monitor):
         elif self.overlay_action == "skip_intro" and user_initiated:
             self.cancel_auto_skip_intro()
             log("Skip Intro overlay dismissed by user action", xbmc.LOGDEBUG)
+        elif self.overlay_action == "stinger" and user_initiated:
+            log("Stinger overlay dismissed by user action", xbmc.LOGDEBUG)
         self.close_overlay()
 
     def seek_skip_intro(self):
