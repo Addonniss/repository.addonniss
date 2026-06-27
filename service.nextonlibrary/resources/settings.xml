@@ -151,6 +151,19 @@
                         <dependency type="enable" setting="enable_stinger_movies">true</dependency>
                     </dependencies>
                 </setting>
+
+                <setting id="stinger_early_toast_duration" type="integer" label="30066" help="30067">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>1</minimum>
+                        <maximum>30</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>12</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_stinger_movies">true</dependency>
+                    </dependencies>
+                </setting>
             </group>
         </category>
 

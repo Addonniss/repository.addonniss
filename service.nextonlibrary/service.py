@@ -314,7 +314,7 @@ class NextOnLibraryService(xbmc.Monitor):
         log("Service stopped", force=True)
 
     def get_poll_interval(self):
-        if self.overlay_action in ("skip_intro", "next_episode") and self.overlay:
+        if self.overlay_action in ("skip_intro", "next_episode", "stinger") and self.overlay:
             return ANIMATION_POLL_INTERVAL
         if self.auto_skip_intro_active or self.auto_play_active:
             return ANIMATION_POLL_INTERVAL
@@ -472,32 +472,25 @@ class NextOnLibraryService(xbmc.Monitor):
             return True
         if item.get("showtitle"):
             return True
-        return self.parse_int(item.get("season")) is not None or self.parse_int(item.get("episode")) is not None
+        return (self.parse_int(item.get("season")) or 0) > 0 or (self.parse_int(item.get("episode")) or 0) > 0
 
     def get_library_movie(self, item):
         if not item:
             return None
 
-        item_type = item.get("type")
-
-        # Library movie — require a valid library ID
-        if item_type == "movie":
-            movie_id = item.get("id") or item.get("movieid")
-            return item if movie_id else None
-
-        # Plugin/stream playback — accept "unknown" type items that look like movies
-        if item_type == "unknown":
-            # Reject items with TV show markers
-            if item.get("showtitle"):
-                return None
-            tvshow_id = item.get("tvshowid")
-            if tvshow_id not in (None, "", -1):
-                return None
-            if item.get("season") or item.get("episode"):
-                return None
-            # Must have at least a title or label to query against stinger sources
-            if item.get("title") or item.get("label"):
-                return item
+        # Detect movies by characteristics — same lenient pattern as is_tv_show_playback()
+        # Reject items with TV show markers (Kodi uses -1 for "not applicable")
+        if item.get("showtitle"):
+            return None
+        tvshow_id = item.get("tvshowid")
+        if tvshow_id not in (None, "", -1):
+            return None
+        if (item.get("season") or 0) > 0 or (item.get("episode") or 0) > 0:
+            return None
+        # Must have at least a title or label to query against stinger sources
+        # (Kodi returns 'label' by default in Player.GetItem even without requesting it)
+        if item.get("title") or item.get("label"):
+            return item
 
         return None
 
@@ -1363,7 +1356,7 @@ class NextOnLibraryService(xbmc.Monitor):
         movie = self.current_movie
         if not movie:
             return None
-        title = (movie.get("title") or "").strip()
+        title = (movie.get("title") or movie.get("label") or "").strip()
         if not title:
             return None
 
@@ -1445,6 +1438,7 @@ class NextOnLibraryService(xbmc.Monitor):
             for term in taxonomy:
                 name = (term.get("name") or "").lower().strip() if isinstance(term, dict) else ""
                 if name:
+                    name = name.replace("&amp;", "&").replace("&#038;", "&").replace("&#38;", "&")
                     categories.add(name)
 
         if "non-stingers" in categories:
@@ -1536,7 +1530,7 @@ class NextOnLibraryService(xbmc.Monitor):
         movie = self.current_movie
         if not movie:
             return None
-        title = (movie.get("title") or "").strip()
+        title = (movie.get("title") or movie.get("label") or "").strip()
         if not title:
             return None
 
@@ -2037,14 +2031,21 @@ class NextOnLibraryService(xbmc.Monitor):
             log("Stinger databases report no post-credits scene for this movie", xbmc.LOGDEBUG)
             return
 
-        # Early notification at movie start (always on, configurable window)
+        # Early notification at movie start (always on, configurable window).
+        # Bypass the self.overlay check — Skip Intro may have claimed it first.
         early_seconds = get_setting_int("stinger_early_notify_seconds", default=10, minimum=0, maximum=60)
-        if early_seconds > 0 and not self.stinger_start_prompted and not self.overlay:
-            if current_time <= early_seconds:
+        if early_seconds > 0 and not self.stinger_start_prompted:
+            if current_time >= early_seconds:
                 self.stinger_start_prompted = True
-                self.show_overlay("stinger")
+                toast_duration = get_setting_int("stinger_early_toast_duration", default=12, minimum=1, maximum=30)
+                xbmcgui.Dialog().notification(
+                    localize(30059),
+                    "%s has mid/post-credits scenes" % (self.current_movie.get("label") or ""),
+                    xbmcgui.NOTIFICATION_WARNING,
+                    toast_duration * 1000,
+                )
                 log("Displayed Stinger early notification for movie '%s'" % (
-                    (self.current_movie or {}).get("title", ""),
+                    (self.current_movie or {}).get("label", ""),
                 ), xbmc.LOGDEBUG)
                 return
 

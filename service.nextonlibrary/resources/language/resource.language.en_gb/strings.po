@@ -234,7 +234,7 @@ msgid "If no chapter data is available, show the Stinger alert when playback rea
 msgstr ""
 
 msgctxt "#30059"
-msgid "Stinger"
+msgid "Stay Tuned"
 msgstr ""
 
 msgctxt "#30060"
@@ -258,5 +258,13 @@ msgid "Early Notification Delay"
 msgstr ""
 
 msgctxt "#30065"
-msgid "Show a Stinger heads-up within this many seconds of starting a movie that has mid-credits or post-credits content. Set to 0 to disable the early notification (the end-of-playback alert still appears). Maximum: 60."
+msgid "Show a Stinger heads-up notification this many seconds after a movie starts playing. Set to 0 to disable. Maximum: 60."
+msgstr ""
+
+msgctxt "#30066"
+msgid "Toast Duration"
+msgstr ""
+
+msgctxt "#30067"
+msgid "How many seconds the early Stinger notification stays on screen. Default: 12. Maximum: 30."
 msgstr ""

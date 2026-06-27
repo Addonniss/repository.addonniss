@@ -1,10 +1,11 @@
-1.1.1
-- Stinger now works with plugin/stream playback (POV, TMDbHelper, etc.) — previously only detected library movies
-- Stinger now shows an early heads-up notification at the start of movies with post-credits content, configurable via Early Notification Delay (0-60 seconds, default 10)
-- Stinger end-of-playback alert now triggers at the second-to-last chapter (start of credits) instead of the last chapter (the stinger scene itself), when 3+ chapters are available
-- Stinger end-of-playback falls back to the trigger percent when fewer than 3 chapters exist
+1.1.2
+- Stinger now works with streaming add-ons (POV, TMDbHelper, etc.) — no longer limited to library movies only
+- New: early heads-up notification when starting a movie that has extra scenes during or after the credits
+- New settings: choose when the notification appears (0–60 seconds) and how long it stays (1–30 seconds)
+- The end-of-playback alert now appears at a better moment — before the credits roll, not during the extra scene itself
+- The overlay button now reads "Stay Tuned" instead of "Stinger"
 
-1.1.0
+1.1.1
 - Added Stinger alerts for movies: detects mid-credits and post-credits scenes using TMDB, AfterCredits.com, and Wikipedia
 - Stinger alert appears near the end of movie playback when a post-credits scene is detected; no alert means the user can safely stop
 - Stinger uses the last chapter marker for timing, with a configurable percentage fallback (default 85%)
