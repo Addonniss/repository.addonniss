@@ -138,6 +138,19 @@
                         <dependency type="enable" setting="enable_stinger_movies">true</dependency>
                     </dependencies>
                 </setting>
+
+                <setting id="stinger_early_notify_seconds" type="integer" label="30064" help="30065">
+                    <level>0</level>
+                    <constraints>
+                        <minimum>0</minimum>
+                        <maximum>60</maximum>
+                    </constraints>
+                    <control type="edit" format="integer" />
+                    <default>10</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_stinger_movies">true</dependency>
+                    </dependencies>
+                </setting>
             </group>
         </category>
 

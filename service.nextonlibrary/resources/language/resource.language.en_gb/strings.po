@@ -198,7 +198,7 @@ msgid "Enable Stinger Alerts"
 msgstr ""
 
 msgctxt "#30050"
-msgid "Shows a Stinger alert near the end of movie playback when a mid-credits or post-credits scene is detected. Queries TMDB, AfterCredits.com, and Wikipedia for stinger data. The alert appears at the last chapter marker, falling back to the trigger percent when no chapters are available."
+msgid "Shows a Stinger heads-up when starting a movie and an alert near the end of playback when a mid-credits or post-credits scene is detected. Queries TMDB, AfterCredits.com, and Wikipedia for stinger data. The end alert appears at the last chapter marker, falling back to the trigger percent when no chapters are available."
 msgstr ""
 
 msgctxt "#30051"
@@ -251,4 +251,12 @@ msgstr ""
 
 msgctxt "#30063"
 msgid "On: prioritize online stinger metadata from TMDB and AfterCredits, then fall back to Wikipedia. Off: prioritize Wikipedia and fall back to online sources."
+msgstr ""
+
+msgctxt "#30064"
+msgid "Early Notification Delay"
+msgstr ""
+
+msgctxt "#30065"
+msgid "Show a Stinger heads-up within this many seconds of starting a movie that has mid-credits or post-credits content. Set to 0 to disable the early notification (the end-of-playback alert still appears). Maximum: 60."
 msgstr ""

@@ -1,3 +1,8 @@
+1.1.1
+- Stinger now shows an early heads-up notification at the start of movies with post-credits content, configurable via Early Notification Delay (0-60 seconds, default 10)
+- Stinger end-of-playback alert now triggers at the second-to-last chapter (start of credits) instead of the last chapter (the stinger scene itself), when 3+ chapters are available
+- Stinger end-of-playback falls back to the trigger percent when fewer than 3 chapters exist
+
 1.1.0
 - Added Stinger alerts for movies: detects mid-credits and post-credits scenes using TMDB, AfterCredits.com, and Wikipedia
 - Stinger alert appears near the end of movie playback when a post-credits scene is detected; no alert means the user can safely stop

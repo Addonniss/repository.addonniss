@@ -226,6 +226,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.current_movie = None
         self.stinger_result = None
         self.stinger_queried = False
+        self.stinger_start_prompted = False
 
     def close_overlay(self):
         if not self.overlay:
@@ -360,6 +361,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.prompted = False
         self.stinger_result = None
         self.stinger_queried = False
+        self.stinger_start_prompted = False
         self.overlay_action = None
         self.cancel_auto_play(log_message=False)
 
@@ -1591,9 +1593,16 @@ class NextOnLibraryService(xbmc.Monitor):
         return None
 
     def get_stinger_trigger_time(self, total_time):
-        chapter_trigger = self.get_last_chapter_trigger(total_time)
-        if chapter_trigger is not None:
-            return chapter_trigger
+        candidates = []
+        cutoff = max(1.0, total_time - 5.0)
+        for start_time in self.chapter_starts:
+            if 0 < start_time < cutoff:
+                candidates.append(start_time)
+
+        # Use second-to-last chapter (start of credits), not the last (stinger scene itself).
+        # Require at least 3 candidates to avoid picking chapter 1 on a 2-chapter movie.
+        if len(candidates) >= 3:
+            return candidates[-2]
 
         fallback_percent = get_setting_int("stinger_trigger_percent", default=85, minimum=50, maximum=99)
         return max(1.0, total_time * (fallback_percent / 100.0))
@@ -1999,12 +2008,6 @@ class NextOnLibraryService(xbmc.Monitor):
         if self.stinger_queried and self.stinger_result is None:
             return
 
-        if self.prompted or self.overlay_action == "stinger":
-            return
-
-        if self.overlay:
-            return
-
         if not self.stinger_queried:
             self.stinger_result = self.get_stinger_info()
             self.stinger_queried = True
@@ -2015,6 +2018,24 @@ class NextOnLibraryService(xbmc.Monitor):
         has_any = self.stinger_result.get("mid") or self.stinger_result.get("post")
         if not has_any:
             log("Stinger databases report no post-credits scene for this movie", xbmc.LOGDEBUG)
+            return
+
+        # Early notification at movie start (always on, configurable window)
+        early_seconds = get_setting_int("stinger_early_notify_seconds", default=10, minimum=0, maximum=60)
+        if early_seconds > 0 and not self.stinger_start_prompted and not self.overlay:
+            if current_time <= early_seconds:
+                self.stinger_start_prompted = True
+                self.show_overlay("stinger")
+                log("Displayed Stinger early notification for movie '%s'" % (
+                    (self.current_movie or {}).get("title", ""),
+                ), xbmc.LOGDEBUG)
+                return
+
+        # Credits-zone notification (chapter-based or percentage fallback)
+        if self.prompted or self.overlay_action == "stinger":
+            return
+
+        if self.overlay:
             return
 
         trigger_time = self.get_stinger_trigger_time(total_time)
