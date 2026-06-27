@@ -477,12 +477,29 @@ class NextOnLibraryService(xbmc.Monitor):
     def get_library_movie(self, item):
         if not item:
             return None
-        if item.get("type") != "movie":
-            return None
-        movie_id = item.get("id") or item.get("movieid")
-        if not movie_id:
-            return None
-        return item
+
+        item_type = item.get("type")
+
+        # Library movie — require a valid library ID
+        if item_type == "movie":
+            movie_id = item.get("id") or item.get("movieid")
+            return item if movie_id else None
+
+        # Plugin/stream playback — accept "unknown" type items that look like movies
+        if item_type == "unknown":
+            # Reject items with TV show markers
+            if item.get("showtitle"):
+                return None
+            tvshow_id = item.get("tvshowid")
+            if tvshow_id not in (None, "", -1):
+                return None
+            if item.get("season") or item.get("episode"):
+                return None
+            # Must have at least a title or label to query against stinger sources
+            if item.get("title") or item.get("label"):
+                return item
+
+        return None
 
     def is_movie_playback(self, item):
         if not item:
