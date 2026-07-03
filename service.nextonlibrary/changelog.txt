@@ -1,3 +1,7 @@
+1.1.3
+- Removed a dead HTTP error-condition guard in the remote JSON fetcher
+- Cleaned up four orphaned localization strings (TMDB API Key / Stinger Online Metadata Priority) that had no corresponding settings
+
 1.1.2
 - Stinger now works with streaming add-ons (POV, TMDbHelper, etc.) — no longer limited to library movies only
 - New: early heads-up notification when starting a movie that has extra scenes during or after the credits

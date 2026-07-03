@@ -956,8 +956,7 @@ class NextOnLibraryService(xbmc.Monitor):
             if exc.code == 404:
                 log("%s lookup returned 404 (no metadata match)" % source_name, xbmc.LOGDEBUG)
                 return None
-            if exc.code not in (404,):
-                log("%s lookup failed with HTTP %s" % (source_name, exc.code), xbmc.LOGDEBUG)
+            log("%s lookup failed with HTTP %s" % (source_name, exc.code), xbmc.LOGDEBUG)
             return None
         except URLError as exc:
             log("%s lookup failed: %s" % (source_name, exc.reason), xbmc.LOGDEBUG)

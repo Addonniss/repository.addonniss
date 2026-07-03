@@ -237,22 +237,6 @@ msgctxt "#30059"
 msgid "Stay Tuned"
 msgstr ""
 
-msgctxt "#30060"
-msgid "TMDB API Key"
-msgstr ""
-
-msgctxt "#30061"
-msgid "Your personal TMDB v3 API key. Leave blank to use the built-in community fallback key."
-msgstr ""
-
-msgctxt "#30062"
-msgid "Online Metadata Priority"
-msgstr ""
-
-msgctxt "#30063"
-msgid "On: prioritize online stinger metadata from TMDB and AfterCredits, then fall back to Wikipedia. Off: prioritize Wikipedia and fall back to online sources."
-msgstr ""
-
 msgctxt "#30064"
 msgid "Early Notification Delay"
 msgstr ""
