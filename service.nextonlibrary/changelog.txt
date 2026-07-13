@@ -1,3 +1,6 @@
+1.1.4
+- New setting: keep the Skip Intro button visible for the entire intro segment instead of auto-hiding after 20%
+
 1.1.3
 - Removed a dead HTTP error-condition guard in the remote JSON fetcher
 - Cleaned up four orphaned localization strings (TMDB API Key / Stinger Online Metadata Priority) that had no corresponding settings

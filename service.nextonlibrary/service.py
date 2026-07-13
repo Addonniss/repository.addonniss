@@ -1794,7 +1794,7 @@ class NextOnLibraryService(xbmc.Monitor):
         if current_time < self.skip_intro_start:
             return False
 
-        hide_threshold = self.skip_intro_start + ((self.skip_intro_target - self.skip_intro_start) * 0.2)
+        hide_threshold = self.skip_intro_start + ((self.skip_intro_target - self.skip_intro_start) * (1.0 if get_setting_bool("skip_intro_full_segment") else 0.2))
         if current_time >= hide_threshold:
             if self.overlay_action == "skip_intro":
                 log(
@@ -1818,7 +1818,7 @@ class NextOnLibraryService(xbmc.Monitor):
         if self.skip_intro_overlay_wall_shown_at is not None:
             wall_elapsed = monotonic() - self.skip_intro_overlay_wall_shown_at
 
-        if self.skip_intro_overlay_shown_at is not None and wall_elapsed is not None and wall_elapsed >= 10.0:
+        if self.skip_intro_overlay_shown_at is not None and wall_elapsed is not None and wall_elapsed >= 10.0 and not get_setting_bool("skip_intro_full_segment"):
             if self.overlay_action == "skip_intro":
                 log(
                     "Closing Skip Intro overlay after timeout (current=%.2f, shown_at=%.2f)" % (
@@ -1862,7 +1862,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.show_overlay("skip_intro")
         self.skip_intro_overlay_shown_at = current_time
         self.skip_intro_overlay_wall_shown_at = monotonic()
-        self.skip_intro_overlay_visual_duration = max(0.25, min(10.0, hide_threshold - current_time))
+        self.skip_intro_overlay_visual_duration = max(0.25, hide_threshold - current_time) if get_setting_bool("skip_intro_full_segment") else max(0.25, min(10.0, hide_threshold - current_time))
         self.skip_intro_prompted = True
         if auto_skip_enabled:
             self.update_overlay_progress(0.0)

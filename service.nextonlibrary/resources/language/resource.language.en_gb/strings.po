@@ -252,3 +252,11 @@ msgstr ""
 msgctxt "#30067"
 msgid "How many seconds the early Stinger notification stays on screen. Default: 12. Maximum: 30."
 msgstr ""
+
+msgctxt "#30068"
+msgid "Persistent Button"
+msgstr ""
+
+msgctxt "#30069"
+msgid "When enabled, the Skip Intro button stays visible for the entire intro segment instead of disappearing after 20%. Useful when you want to decide later in the intro whether to skip."
+msgstr ""

@@ -41,6 +41,15 @@
                     </dependencies>
                 </setting>
 
+                <setting id="skip_intro_full_segment" type="boolean" label="30068" help="30069">
+                    <level>0</level>
+                    <control type="toggle" />
+                    <default>false</default>
+                    <dependencies>
+                        <dependency type="enable" setting="enable_skip_intro">true</dependency>
+                    </dependencies>
+                </setting>
+
                 <setting id="enable_skip_intro_fallback" type="boolean" label="30023" help="30024">
                     <level>0</level>
                     <control type="toggle" />
