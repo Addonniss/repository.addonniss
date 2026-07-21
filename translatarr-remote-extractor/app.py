@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import re
@@ -571,7 +572,7 @@ def read_valid_srt_file(path: str) -> tuple:
     return True, text, ""
 
 
-def probe_embedded_tracks(video_path: str, language: str, timeout: int, prefer_non_sdh: bool = True) -> ProbeResponse:
+async def probe_embedded_tracks(video_path: str, language: str, timeout: int, prefer_non_sdh: bool = True) -> ProbeResponse:
     resolved_video_path = apply_path_maps((video_path or "").strip())
     extension = os.path.splitext(resolved_video_path)[1].lower()
 
@@ -593,7 +594,7 @@ def probe_embedded_tracks(video_path: str, language: str, timeout: int, prefer_n
             )
 
         try:
-            info_result = run_cmd(["mkvinfo", resolved_video_path], timeout=timeout)
+            info_result = await asyncio.to_thread(run_cmd, ["mkvinfo", resolved_video_path], timeout=timeout)
         except subprocess.TimeoutExpired:
             return ProbeResponse(
                 ok=False,
@@ -650,7 +651,8 @@ def probe_embedded_tracks(video_path: str, language: str, timeout: int, prefer_n
         )
 
     try:
-        probe_result = run_cmd(
+        probe_result = await asyncio.to_thread(
+            run_cmd,
             [
                 "ffprobe",
                 "-v", "error",
@@ -736,7 +738,7 @@ def health():
 
 
 @app.post("/probe", response_model=ProbeResponse)
-def probe_subtitle(req: ProbeRequest, authorization: Optional[str] = Header(default=None)):
+async def probe_subtitle(req: ProbeRequest, authorization: Optional[str] = Header(default=None)):
     require_auth(authorization)
     ensure_runtime_dirs()
 
@@ -751,11 +753,11 @@ def probe_subtitle(req: ProbeRequest, authorization: Optional[str] = Header(defa
     if timeout <= 0:
         raise HTTPException(status_code=400, detail="timeout must be greater than 0")
 
-    return probe_embedded_tracks(video_path, language, timeout, req.prefer_non_sdh)
+    return await probe_embedded_tracks(video_path, language, timeout, req.prefer_non_sdh)
 
 
 @app.post("/extract", response_model=ExtractResponse)
-def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(default=None)):
+async def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(default=None)):
     require_auth(authorization)
     ensure_runtime_dirs()
 
@@ -795,7 +797,7 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
             )
 
         try:
-            info_result = run_cmd(["mkvinfo", resolved_video_path], timeout=timeout)
+            info_result = await asyncio.to_thread(run_cmd, ["mkvinfo", resolved_video_path], timeout=timeout)
         except subprocess.TimeoutExpired:
             return ExtractResponse(
                 ok=False,
@@ -874,7 +876,8 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
             os.remove(temp_output)
 
         try:
-            extract_result = run_cmd(
+            extract_result = await asyncio.to_thread(
+                run_cmd,
                 ["mkvextract", "tracks", resolved_video_path, "{0}:{1}".format(selected["mkvextract_id"], temp_output)],
                 timeout=timeout
             )
@@ -945,7 +948,8 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
         )
 
     try:
-        probe_result = run_cmd(
+        probe_result = await asyncio.to_thread(
+            run_cmd,
             [
                 "ffprobe",
                 "-v", "error",
@@ -1039,7 +1043,8 @@ def extract_subtitle(req: ExtractRequest, authorization: Optional[str] = Header(
         os.remove(temp_output)
 
     try:
-        extract_result = run_cmd(
+        extract_result = await asyncio.to_thread(
+            run_cmd,
             [
                 "ffmpeg",
                 "-y",

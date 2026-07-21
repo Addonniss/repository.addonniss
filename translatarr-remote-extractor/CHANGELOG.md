@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-21
+
+### Changed
+- Converted `/probe` and `/extract` endpoints from synchronous to async (`async def`), wrapping all blocking subprocess calls (`mkvinfo`, `mkvextract`, `ffprobe`, `ffmpeg`) with `await asyncio.to_thread(run_cmd, ...)`
+- The uvicorn worker now stays responsive during long-running extractions so `/health` and other requests are not blocked, preventing Docker health-check kills mid-extraction
+
 ## 2026-06-02
 
 ### Added
