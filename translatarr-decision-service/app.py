@@ -236,6 +236,31 @@ def probe_embedded_target(media_path: str) -> Dict[str, Any]:
     return response.json()
 
 
+def describe_subtitle_track(track: Dict[str, Any]) -> str:
+    """Build a human-readable label for a subtitle track (Full / SDH / Forced)."""
+    if not track:
+        return "unknown track"
+    name = (track.get("name") or "").strip()
+    forced = track.get("forced", False)
+    codec = (track.get("codec_id") or "").strip()
+    track_num = track.get("track_number") or "?"
+
+    if forced:
+        label = "Forced"
+    elif name and any(t in name.lower() for t in ["sdh", "hearing impaired", "cc", "closed captions"]):
+        label = "SDH"
+    elif name:
+        label = name
+    else:
+        label = "Full"
+
+    parts = [label]
+    if codec:
+        parts.append("({0})".format(codec))
+    parts.append("[track {0}]".format(track_num))
+    return " ".join(parts)
+
+
 def extract_embedded_source(media_path: str) -> Dict[str, Any]:
     require_extractor_config()
     payload = {
@@ -709,6 +734,8 @@ def format_discord_description(lines: List[str]) -> str:
         "cost",
         "style",
         "target suffix",
+        "track",
+        "cues",
     }
     formatted = []
     for line in lines:
@@ -820,7 +847,7 @@ async def run_decision_job(job_id: str) -> None:
             notify_job(job_id, "Translatarr Decision: stopped", [
                 "Embedded Romanian subtitle exists",
                 "Action: no extraction, no translation",
-                "Track: {0}".format(selected.get("name") or selected.get("language") or "matched"),
+                "Track: {0}".format(describe_subtitle_track(selected)),
             ])
             return
 
@@ -860,6 +887,7 @@ async def run_decision_job(job_id: str) -> None:
             update_job(job_id, "running", "Embedded source subtitle extracted", source_saved_path=str(source_saved_path))
             notify_job(job_id, "Translatarr Decision: extracted", [
                 "Embedded {0} subtitle extracted".format(SOURCE_LANGUAGE_NAME),
+                "Track: {0}".format(describe_subtitle_track(extract.get("selected_track"))),
                 "Source subtitle: {0}".format(source_saved_path.name),
                 "Cues: {0}".format(len(source_blocks)),
             ])
@@ -867,6 +895,7 @@ async def run_decision_job(job_id: str) -> None:
             update_job(job_id, "running", "Embedded source subtitle extracted")
             notify_job(job_id, "Translatarr Decision: extracted", [
                 "Embedded {0} subtitle extracted".format(SOURCE_LANGUAGE_NAME),
+                "Track: {0}".format(describe_subtitle_track(extract.get("selected_track"))),
                 "Source subtitle save: disabled",
                 "Cues: {0}".format(len(source_blocks)),
             ])

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-22
+
+### Added
+- Added `describe_subtitle_track()` helper that builds human-readable track labels (`Full`, `SDH`, `Forced`) with codec and track number from the extractor's `selected_track` data
+- Enriched Discord notifications for embedded subtitle extraction and target probing with detailed track info so the exact track type, codec, and number are visible
+
+### Changed
+- Added `"track"` and `"cues"` to the `code_labels` set in `format_discord_description` for consistent backtick formatting of track and cue lines in Discord embeds
+
 ## Unreleased
 
 ### Added
