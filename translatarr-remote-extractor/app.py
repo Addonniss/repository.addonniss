@@ -262,7 +262,7 @@ def parse_mkvinfo_output(text: str) -> List[Dict[str, Any]]:
             current["language"] = line.split(":", 1)[1].strip().lower()
         elif "Name:" in normalized_line:
             current["name"] = line.split(":", 1)[1].strip()
-        elif "forced" in normalized_line and "flag:" in normalized_line:
+        elif "forced" in normalized_line.lower() and "flag:" in normalized_line.lower():
             current["forced"] = "1" in line or "true" in line.lower()
         elif "Default track flag:" in normalized_line or "Default flag:" in normalized_line:
             current["default"] = "1" in line or "true" in line.lower()
