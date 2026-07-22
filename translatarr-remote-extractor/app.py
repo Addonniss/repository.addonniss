@@ -262,7 +262,7 @@ def parse_mkvinfo_output(text: str) -> List[Dict[str, Any]]:
             current["language"] = line.split(":", 1)[1].strip().lower()
         elif "Name:" in normalized_line:
             current["name"] = line.split(":", 1)[1].strip()
-        elif "Forced flag:" in normalized_line:
+        elif "forced" in normalized_line and "flag:" in normalized_line:
             current["forced"] = "1" in line or "true" in line.lower()
         elif "Default track flag:" in normalized_line or "Default flag:" in normalized_line:
             current["default"] = "1" in line or "true" in line.lower()
@@ -296,7 +296,7 @@ def score_track(track: Dict[str, Any], wanted_lang: str, prefer_non_sdh: bool) -
     if track.get("default"):
         score += 5
     if track.get("forced"):
-        score -= 10
+        score -= 25
 
     if "s_text" in codec or "subrip" in codec or "ass" in codec or "ssa" in codec:
         score += 25

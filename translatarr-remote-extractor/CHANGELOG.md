@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-22
+
+### Fixed
+- Fixed `parse_mkvinfo_output` forced-track detection: the parser looked for `"Forced flag:"` but mkvinfo outputs `"Forced display flag:"`, so the forced penalty never applied; now matches any line containing both `"forced"` and `"flag:"`
+- Increased forced subtitle penalty from −10 to −25 so forced tracks rank below SDH tracks; final priority is now **Full > SDH > Forced**
+
 ## 2026-07-21
 
 ### Changed
