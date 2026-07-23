@@ -2275,6 +2275,13 @@ class NextOnLibraryService(xbmc.Monitor):
             log("Next episode vanished before click handling", xbmc.LOGDEBUG)
             return
 
+        # Pause first so Kodi/Trakt can scrobble at the current position
+        # before opening the next episode.
+        player_id = self.get_active_player_id()
+        if player_id is not None:
+            jsonrpc("Player.PlayPause", {"playerid": player_id, "play": False})
+            xbmc.sleep(500)
+
         jsonrpc("Player.Open", {"item": {"episodeid": episode.get("episodeid")}})
         log("Opening next episode %s" % episode.get("episodeid"), xbmc.LOGDEBUG)
 

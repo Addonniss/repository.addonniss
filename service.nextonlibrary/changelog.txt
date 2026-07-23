@@ -1,3 +1,6 @@
+1.1.5
+- Next On now pauses the current episode before opening the next one, so Kodi and Trakt can scrobble the episode as watched at the trigger position
+
 1.1.4
 - New setting: keep the Skip Intro button visible for the entire intro segment instead of auto-hiding after 20%
 
