@@ -114,7 +114,7 @@ def run():
 
         if lookup.status_code != 200:
             notify("Radarr", "Lookup failed: {}".format(lookup.status_code), xbmcgui.NOTIFICATION_ERROR)
-            log("Radarr lookup failed: {}".format(lookup.text), xbmcgui.LOGERROR)
+            log("Radarr lookup failed: {}".format(lookup.text), xbmc.LOGERROR)
             return
 
         movies = lookup.json()
@@ -127,7 +127,7 @@ def run():
 
         if not movie.get("tmdbId"):
             notify("Radarr", "Invalid lookup result", xbmcgui.NOTIFICATION_ERROR)
-            log("Radarr invalid lookup payload: {}".format(movie), xbmcgui.LOGERROR)
+            log("Radarr invalid lookup payload: {}".format(movie), xbmc.LOGERROR)
             return
 
         if movie.get("id", 0) > 0:
@@ -144,7 +144,7 @@ def run():
                 notify("Radarr", "'{}' already exists. Search triggered.".format(title))
             else:
                 notify("Radarr", "Movie exists, but search failed", xbmcgui.NOTIFICATION_ERROR)
-                log("Radarr command failed: {}".format(cmd.text), xbmcgui.LOGERROR)
+                log("Radarr command failed: {}".format(cmd.text), xbmc.LOGERROR)
             return
 
         payload = {
@@ -179,8 +179,8 @@ def run():
             notify("Radarr", "Added '{}'. Search started.".format(title))
         else:
             notify("Radarr", "Add failed: {}".format(add_resp.status_code), xbmcgui.NOTIFICATION_ERROR)
-            log("Radarr add failed: {}".format(add_resp.text), xbmcgui.LOGERROR)
+            log("Radarr add failed: {}".format(add_resp.text), xbmc.LOGERROR)
 
     except Exception as e:
         notify("Radarr", "Error: {}".format(e), xbmcgui.NOTIFICATION_ERROR)
-        log("Radarr crash: {}".format(e), xbmcgui.LOGERROR)
+        log("Radarr crash: {}".format(e), xbmc.LOGERROR)
