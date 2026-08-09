@@ -260,7 +260,7 @@ def run():
 
         if lookup.status_code != 200:
             notify("Sonarr", "Lookup failed: {}".format(lookup.status_code), xbmcgui.NOTIFICATION_ERROR)
-            log("Sonarr lookup failed: {}".format(lookup.text), xbmcgui.LOGERROR)
+            log("Sonarr lookup failed: {}".format(lookup.text), xbmc.LOGERROR)
             return
 
         results = lookup.json()
@@ -296,7 +296,7 @@ def run():
 
             if add_resp.status_code != 201:
                 notify("Sonarr", "Add failed: {}".format(add_resp.status_code), xbmcgui.NOTIFICATION_ERROR)
-                log("Sonarr add failed: {}".format(add_resp.text), xbmcgui.LOGERROR)
+                log("Sonarr add failed: {}".format(add_resp.text), xbmc.LOGERROR)
                 return
 
             series_db_id = add_resp.json()["id"]
@@ -318,7 +318,7 @@ def run():
                 notify("Sonarr", "Series search started: {}".format(title))
             else:
                 notify("Sonarr", "Series search failed", xbmcgui.NOTIFICATION_ERROR)
-                log("Sonarr series search failed: {}".format(cmd.text), xbmcgui.LOGERROR)
+                log("Sonarr series search failed: {}".format(cmd.text), xbmc.LOGERROR)
             return
 
         if info["type"] == "season":
@@ -372,11 +372,11 @@ def run():
                 )
             else:
                 notify("Sonarr", "Episode search failed", xbmcgui.NOTIFICATION_ERROR)
-                log("Sonarr episode search failed: {}".format(cmd.text), xbmcgui.LOGERROR)
+                log("Sonarr episode search failed: {}".format(cmd.text), xbmc.LOGERROR)
             return
 
         notify("Sonarr", "Unsupported TV item", xbmcgui.NOTIFICATION_ERROR)
 
     except Exception as e:
         notify("Sonarr", "Error: {}".format(e), xbmcgui.NOTIFICATION_ERROR)
-        log("Sonarr crash: {}".format(e), xbmcgui.LOGERROR)
+        log("Sonarr crash: {}".format(e), xbmc.LOGERROR)
