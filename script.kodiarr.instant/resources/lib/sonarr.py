@@ -278,12 +278,9 @@ def run():
 
             payload = dict(series)
 
-            genres_raw = str(series.get("genres", [])).lower()
-            if "anime" in genres_raw:
+            if "anime" in str(series.get("genres", [])).lower():
                 payload["seriesType"] = "anime"
-            else:
-                payload["seriesType"] = "standard"
-                
+
             payload.update({
                 "qualityProfileId": profile,
                 "rootFolderPath": root,
