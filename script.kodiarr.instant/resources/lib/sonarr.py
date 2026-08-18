@@ -277,6 +277,13 @@ def run():
             should_search_missing = (info["type"] == "tvshow")
 
             payload = dict(series)
+
+            genres_raw = str(series.get("genres", [])).lower()
+            if "anime" in genres_raw:
+                payload["seriesType"] = "anime"
+            else:
+                payload["seriesType"] = "standard"
+                
             payload.update({
                 "qualityProfileId": profile,
                 "rootFolderPath": root,
