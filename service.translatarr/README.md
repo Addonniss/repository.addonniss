@@ -120,7 +120,8 @@ A **Thinking Level** setting is available for Gemini 3.x models, controlling how
 
 Requires an OpenAI API key. Model selection is available in settings:
 
-- `gpt-5.4-nano` (default) — the cheapest GPT-5 class model, ideal for high-volume translation
+- `gpt-5.4-nano` (default) — GPT-5.4 nano an option for high-volume translation
+- `gpt-5.6-luna` —  the cheapest GPT-5 class model, ideal for accurate high-volume translation
 - `gpt-5-mini` — a faster GPT-5 option with good quality
 - `gpt-4o-mini` — a proven low-cost non-reasoning model
 
@@ -168,6 +169,7 @@ All LLM-based providers charge per token (input + output). Prices below are in *
 | **Gemini** | 2.5 Flash-Lite | $0.10 | $0.40 |
 | **OpenAI** | gpt-4o-mini | $0.15 | $0.60 |
 | | gpt-5.4-nano | $0.20 | $1.25 |
+| | gpt-5.6-luna | $0.20 | $1.20 |
 | **Gemini** | 3.1 Flash-Lite | $0.25 | $1.50 |
 | **OpenAI** | gpt-5-mini | $0.25 | $2.00 |
 | **Anthropic** | Claude Haiku 4.5 | $1.00 | $5.00 |

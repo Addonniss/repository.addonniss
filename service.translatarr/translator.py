@@ -272,6 +272,7 @@ class GeminiTranslator(BaseTranslator):
 class OpenAITranslator(BaseTranslator):
 
     PRICING = {
+        "gpt-5.6-luna": (0.00000020, 0.00000120),
         "gpt-5.4-nano": (0.00000020, 0.00000125),
         "gpt-5-mini": (0.00000025, 0.0000020),
         "gpt-4o-mini": (0.00000015, 0.00000060),
@@ -282,6 +283,7 @@ class OpenAITranslator(BaseTranslator):
         self.temperature = self._get_temperature("OpenAI")
 
         model_map = {
+            "gpt-5.6-luna": "gpt-5.6-luna",
             "gpt-5.4-nano": "gpt-5.4-nano",
             "gpt-5-mini": "gpt-5-mini",
             "gpt-4o-mini": "gpt-4o-mini",
@@ -296,9 +298,13 @@ class OpenAITranslator(BaseTranslator):
             "Low": "low",
             "Medium": "medium",
             "High": "high",
-        }
+        }   
+            
         raw_level = ADDON.getSetting('openai_reasoning_effort') or "Minimal"
         self.reasoning_effort = reasoning_map.get(raw_level, "minimal")
+        # These models use "none" for the lowest effort; "minimal" is unsupported.
+        if self.model in ("gpt-5.4-nano", "gpt-5.6-luna") and self.reasoning_effort == "minimal":
+            self.reasoning_effort = "none"
 
     def _supports_custom_temperature(self):
         return not self.model.startswith("gpt-5")
