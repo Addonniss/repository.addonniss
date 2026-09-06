@@ -298,7 +298,8 @@ class OpenAITranslator(BaseTranslator):
             "Low": "low",
             "Medium": "medium",
             "High": "high",
-        }
+        }   
+            
         raw_level = ADDON.getSetting('openai_reasoning_effort') or "Minimal"
         self.reasoning_effort = reasoning_map.get(raw_level, "minimal")
         # These models use "none" for the lowest effort; "minimal" is unsupported.
