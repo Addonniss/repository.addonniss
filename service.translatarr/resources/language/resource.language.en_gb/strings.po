@@ -430,7 +430,7 @@ msgid "Reasoning Effort"
 msgstr ""
 
 msgctxt "#30112"
-msgid "Controls how much the GPT-5 model reasons before translating. Minimal uses no reasoning on GPT-5.4 nano and minimal reasoning on GPT-5 mini; High gives deepest reasoning. Does not apply to GPT-4 models."
+msgid "Controls how much the GPT-5 model reasons before translating. Minimal uses no reasoning on GPT-5.4 nano and GPT-5.6 Luna, and minimal reasoning on GPT-5 mini; High gives deepest reasoning. Does not apply to GPT-4 models."
 msgstr ""
 
 msgctxt "#30113"
