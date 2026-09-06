@@ -120,8 +120,8 @@ A **Thinking Level** setting is available for Gemini 3.x models, controlling how
 
 Requires an OpenAI API key. Model selection is available in settings:
 
-- `gpt-5.4-nano` (default) — the cheapest GPT-5 class model, ideal for high-volume translation
-- `gpt-5.6-luna` — a GPT-5.6 option for high-volume translation
+- `gpt-5.4-nano` (default) — GPT-5.4 nano an option for high-volume translation
+- `gpt-5.6-luna` —  the cheapest GPT-5 class model, ideal for accurate high-volume translation
 - `gpt-5-mini` — a faster GPT-5 option with good quality
 - `gpt-4o-mini` — a proven low-cost non-reasoning model
 
