@@ -299,6 +299,9 @@ class OpenAITranslator(BaseTranslator):
         }
         raw_level = ADDON.getSetting('openai_reasoning_effort') or "Minimal"
         self.reasoning_effort = reasoning_map.get(raw_level, "minimal")
+        # GPT-5.4 nano uses "none" for the lowest effort; "minimal" is unsupported.
+        if self.model == "gpt-5.4-nano" and self.reasoning_effort == "minimal":
+            self.reasoning_effort = "none"
 
     def _supports_custom_temperature(self):
         return not self.model.startswith("gpt-5")
