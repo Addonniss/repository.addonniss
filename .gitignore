@@ -2,6 +2,8 @@ __pycache__/
 *.py[cod]
 AGENTS.md
 **/AGENTS.md
+.hermes.md
+**/.hermes.md
 project.bazaar/
 bazarr-master/
 service.upnext-master/
