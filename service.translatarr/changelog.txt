@@ -1,3 +1,7 @@
+v2.6.1
+- Added OpenAI gpt-5.6-luna as a new GPT-5 model option, the cheapest GPT-5 class model for accurate high-volume translation (thanks @BorisTodorov225)
+- GPT-5.4-nano and gpt-5.6-luna now use "none" reasoning effort when the Minimal setting is selected, since those models do not support "minimal" reasoning
+
 v2.6.0
 - Removed "Translate strictly line-by-line" from all 5 AI provider prompts (Gemini, OpenAI, Anthropic, DeepSeek, OpenRouter). The instruction was forcing line-by-line translation that ignored surrounding context, degrading gender and pronoun accuracy in gendered languages
 - Renumbered remaining STRICT RULES accordingly
