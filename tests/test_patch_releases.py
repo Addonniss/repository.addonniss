@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import types
 import unittest
+from urllib.parse import parse_qs, urlsplit
 from unittest.mock import Mock, patch
 import xml.etree.ElementTree as ET
 
@@ -127,6 +128,72 @@ class ToggleTests(unittest.TestCase):
             with patch.object(nexton, 'get_setting_bool', return_value=False):
                 self.assertFalse(service.check_next_on_enabled())
             service.overlay.close.assert_not_called()
+
+
+class TheIntroDBTests(unittest.TestCase):
+    def service(self):
+        service = nexton.NextOnLibraryService.__new__(nexton.NextOnLibraryService)
+        service.remote_intro_cache = {}
+        service.overlay = None
+        service.reset_session()
+        return service
+
+    def assert_v4_request(self, fetch, identifier):
+        url, source = fetch.call_args.args
+        parsed = urlsplit(url)
+        self.assertEqual((parsed.scheme, parsed.netloc, parsed.path),
+                         ('https', 'api.theintrodb.org', '/v4/media'))
+        self.assertEqual(source, 'TheIntroDB')
+        # Kodi supplies season/episode, with no media-server display-order input.
+        self.assertEqual(parse_qs(parsed.query),
+                         {'season': ['0'], 'episode': ['1'], **identifier})
+
+    def test_intro_and_recap_v4_urls_and_tvdb_response(self):
+        for context, identifier in [
+            ({'season': 0, 'episode': 1, 'tmdb_id': 123}, {'tmdb_id': ['123']}),
+            ({'season': 0, 'episode': 1, 'imdb_id': 'tt1234567'}, {'imdb_id': ['tt1234567']}),
+        ]:
+            for segment in ['intro', 'recap']:
+                with self.subTest(identifier=identifier, segment=segment):
+                    service = self.service()
+                    # v4 has tvdb_id, with no tmdb_id in the body.
+                    service.fetch_remote_json = Mock(return_value={
+                        'tvdb_id': 456, 'type': 'tv', 'season': 0, 'episode': 1,
+                        segment: [{'start_ms': 10000, 'end_ms': 60000}],
+                    })
+                    self.assertEqual(service.fetch_skip_intro_from_theintrodb(context, 100), (10, 60))
+                    self.assert_v4_request(service.fetch_remote_json, identifier)
+
+    def test_credits_v4_url_and_tvdb_response(self):
+        for ids, identifier in [
+            ({'tmdb_id': 123}, {'tmdb_id': ['123']}),
+            ({'imdb_id': 'tt1234567'}, {'imdb_id': ['tt1234567']}),
+        ]:
+            with self.subTest(identifier=identifier):
+                service = self.service()
+                service.build_skip_intro_remote_context = Mock(return_value={
+                    'season': 0, 'episode': 1, **ids,
+                })
+                service.fetch_remote_json = Mock(return_value={
+                    'tvdb_id': 456, 'type': 'tv',
+                    'credits': [{'start_ms': 80000, 'end_ms': None}],
+                })
+                self.assertEqual(service.get_remote_next_trigger(100), 80)
+                self.assert_v4_request(service.fetch_remote_json, identifier)
+
+    def test_empty_and_alternate_v4_shapes_keep_fallback(self):
+        for payload in [None, {'tvdb_id': 456, 'intro': [], 'credits': []},
+                        {'tvdb_id': 456, 'episodes': []},
+                        {'tvdb_id': 456, 'versions': []}]:
+            with self.subTest(payload=payload):
+                service = self.service()
+                context = {'season': 0, 'episode': 1, 'tmdb_id': 123}
+                service.build_skip_intro_remote_context = Mock(return_value=context)
+                service.fetch_remote_json = Mock(return_value=payload)
+                service.fetch_next_trigger_from_introdb = Mock(return_value=90)
+                self.assertIsNone(service.fetch_skip_intro_from_theintrodb(context, 100))
+                self.assertEqual(service.get_remote_next_trigger(100), 90)
+                service.fetch_next_trigger_from_introdb.assert_called_once_with(context, 100)
 
 
 class OpenAITests(unittest.TestCase):

@@ -1,3 +1,6 @@
+1.1.7
+- Migrated Skip Intro and Next On timestamp lookups to TheIntroDB API v4 before removal of the deprecated v2 endpoint.
+
 1.1.6
 - Skip Intro, Next On, and Stinger now operate independently.
 - Disabling Next On dismisses its overlay and cancels autoplay, including during playback.

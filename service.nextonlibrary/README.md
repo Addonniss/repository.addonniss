@@ -10,7 +10,9 @@ The three feature toggles operate independently. Disabling Next On keeps Skip In
 
 ## Current Behavior
 
-The add-on can use both local chapter markers and online metadata.
+The add-on can use both local chapter markers and online metadata. TheIntroDB lookups use [API v4](https://theintrodb.org/docs) for intro, recap, and credits timestamps. Existing TMDB/IMDb lookup IDs remain supported; responses are identified by TVDB ID.
+
+Episode numbers come from Kodi playback metadata. No media-server display order is supplied, so TheIntroDB uses its default episode mapping; custom Jellyfin/Plex/Emby display orders are not inferred.
 
 - `Skip Intro` can use:
   - online metadata from `TheIntroDB`
