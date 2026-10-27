@@ -256,11 +256,7 @@ class NextOnLibraryService(xbmc.Monitor):
             if self.waitForAbort(self.get_poll_interval()):
                 break
 
-            if not get_setting_bool("service_enabled"):
-                if self.current_file:
-                    log("Service disabled, clearing current session", xbmc.LOGDEBUG)
-                    self.reset_session()
-                continue
+            next_on_enabled = self.check_next_on_enabled()
 
             if not self.player.isPlayingVideo():
                 if self.current_file:
@@ -295,6 +291,9 @@ class NextOnLibraryService(xbmc.Monitor):
                     self.handle_movie_stinger(current_time, total_time)
                 continue
 
+            if not next_on_enabled:
+                continue
+
             if self.auto_play_active:
                 self.handle_auto_play(current_time)
                 continue
@@ -313,6 +312,16 @@ class NextOnLibraryService(xbmc.Monitor):
 
         log("Service stopped", force=True)
 
+    def check_next_on_enabled(self):
+        # This legacy setting controls Next On only, not the shared monitor.
+        if get_setting_bool("service_enabled"):
+            return True
+        if self.auto_play_active:
+            self.cancel_auto_play(log_message=False)
+        if self.overlay_action == "next_episode":
+            self.close_overlay()
+        return False
+
     def get_poll_interval(self):
         if self.overlay_action in ("skip_intro", "next_episode", "stinger") and self.overlay:
             return ANIMATION_POLL_INTERVAL
@@ -321,9 +330,6 @@ class NextOnLibraryService(xbmc.Monitor):
         return IDLE_POLL_INTERVAL
 
     def bootstrap_session(self):
-        if not get_setting_bool("service_enabled"):
-            return
-
         if not self.player.isPlayingVideo():
             return
 
@@ -1972,6 +1978,9 @@ class NextOnLibraryService(xbmc.Monitor):
         return None
 
     def prompt_for_next_episode(self):
+        if not self.check_next_on_enabled():
+            return False
+
         if self.next_overlay_dismissed:
             return
 
@@ -2069,6 +2078,9 @@ class NextOnLibraryService(xbmc.Monitor):
         ), xbmc.LOGDEBUG)
 
     def start_auto_play_countdown(self, episode, delay, update_progress=True):
+        if not self.check_next_on_enabled():
+            return False
+
         self.auto_play_active = True
         self.auto_play_started_at = monotonic()
         self.auto_play_delay = delay
@@ -2096,6 +2108,9 @@ class NextOnLibraryService(xbmc.Monitor):
         self.update_overlay_progress(0.0, visible=False)
 
     def handle_auto_play(self, current_time):
+        if not self.check_next_on_enabled():
+            return False
+
         if not self.auto_play_active:
             return False
 
@@ -2156,6 +2171,9 @@ class NextOnLibraryService(xbmc.Monitor):
         log("Overlay progress frame set to %03d" % frame_index, xbmc.LOGDEBUG)
 
     def show_overlay(self, action_name):
+        if action_name == "next_episode" and not self.check_next_on_enabled():
+            return
+
         if self.overlay:
             if self.overlay_action == action_name:
                 return
@@ -2268,6 +2286,9 @@ class NextOnLibraryService(xbmc.Monitor):
             log("Failed to seek to skip intro target %.2f seconds" % target_time, xbmc.LOGDEBUG)
 
     def play_next_episode(self):
+        if not self.check_next_on_enabled():
+            return False
+
         episode = self.get_next_episode()
         self.cancel_auto_play(log_message=False)
         self.close_overlay()

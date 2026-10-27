@@ -120,12 +120,13 @@ A **Thinking Level** setting is available for Gemini 3.x models, controlling how
 
 Requires an OpenAI API key. Model selection is available in settings:
 
+- `gpt-6-luna` — $0.10 per million input tokens and $0.50 per million output tokens; Minimal reasoning uses `none`, and custom temperature is omitted
 - `gpt-5.4-nano` (default) — GPT-5.4 nano an option for high-volume translation
 - `gpt-5.6-luna` —  the cheapest GPT-5 class model, ideal for accurate high-volume translation
 - `gpt-5-mini` — a faster GPT-5 option with good quality
 - `gpt-4o-mini` — a proven low-cost non-reasoning model
 
-A **Reasoning Effort** setting is available for GPT-5 models, controlling how much the model reasons before translating. Options are Minimal (default, fastest), Low, Medium, and High.
+A **Reasoning Effort** setting is available for GPT-5 and GPT-6 models, controlling how much the model reasons before translating. Options are Minimal (default, fastest), Low, Medium, and High.
 
 ### Anthropic Claude
 

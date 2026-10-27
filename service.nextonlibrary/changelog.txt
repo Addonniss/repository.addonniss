@@ -1,3 +1,7 @@
+1.1.6
+- Skip Intro, Next On, and Stinger now operate independently.
+- Disabling Next On dismisses its overlay and cancels autoplay, including during playback.
+
 1.1.5
 - Next On now pauses the current episode before opening the next one, so Kodi and Trakt can scrobble the episode as watched at the trigger position
 

@@ -272,6 +272,7 @@ class GeminiTranslator(BaseTranslator):
 class OpenAITranslator(BaseTranslator):
 
     PRICING = {
+        "gpt-6-luna": (0.00000010, 0.00000050),
         "gpt-5.6-luna": (0.00000020, 0.00000120),
         "gpt-5.4-nano": (0.00000020, 0.00000125),
         "gpt-5-mini": (0.00000025, 0.0000020),
@@ -283,6 +284,7 @@ class OpenAITranslator(BaseTranslator):
         self.temperature = self._get_temperature("OpenAI")
 
         model_map = {
+            "gpt-6-luna": "gpt-6-luna",
             "gpt-5.6-luna": "gpt-5.6-luna",
             "gpt-5.4-nano": "gpt-5.4-nano",
             "gpt-5-mini": "gpt-5-mini",
@@ -290,9 +292,9 @@ class OpenAITranslator(BaseTranslator):
         }
 
         self.model = model_map.get(ADDON.getSetting('openai_model'), "gpt-5.4-nano")
-        self.is_gpt5 = self.model.startswith("gpt-5")
+        self.is_reasoning_model = self.model.startswith(("gpt-5", "gpt-6"))
 
-        # Reasoning effort for GPT-5 models
+        # Reasoning effort for GPT-5 and GPT-6 models
         reasoning_map = {
             "Minimal": "minimal",
             "Low": "low",
@@ -303,11 +305,11 @@ class OpenAITranslator(BaseTranslator):
         raw_level = ADDON.getSetting('openai_reasoning_effort') or "Minimal"
         self.reasoning_effort = reasoning_map.get(raw_level, "minimal")
         # These models use "none" for the lowest effort; "minimal" is unsupported.
-        if self.model in ("gpt-5.4-nano", "gpt-5.6-luna") and self.reasoning_effort == "minimal":
+        if self.model in ("gpt-5.4-nano", "gpt-5.6-luna", "gpt-6-luna") and self.reasoning_effort == "minimal":
             self.reasoning_effort = "none"
 
     def _supports_custom_temperature(self):
-        return not self.model.startswith("gpt-5")
+        return not self.is_reasoning_model
 
     def translate_batch(self, text_list, expected_count, context_list=None):
 
@@ -351,7 +353,7 @@ class OpenAITranslator(BaseTranslator):
                 {"role": "user", "content": input_text}
             ]
         }
-        if self.is_gpt5:
+        if self.is_reasoning_model:
             payload["reasoning_effort"] = self.reasoning_effort
         elif self._supports_custom_temperature():
             payload["temperature"] = self.temperature
@@ -401,7 +403,7 @@ class OpenAITranslator(BaseTranslator):
         return (input_tokens * in_price) + (output_tokens * out_price)
 
     def get_model_string(self):
-        if self.is_gpt5:
+        if self.is_reasoning_model:
             return f"OpenAI ({self.model}, reason={self.reasoning_effort})"
         return f"OpenAI ({self.model})"
 

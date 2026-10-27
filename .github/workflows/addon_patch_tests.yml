@@ -1,0 +1,38 @@
+name: Test Kodi Addon Patches
+
+on:
+  pull_request:
+    paths:
+      - 'service.nextonlibrary/**'
+      - 'service.translatarr/**'
+      - 'tests/test_patch_releases.py'
+      - '.github/workflows/addon_patch_tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -p test_patch_releases.py -v
+      - name: Validate Python and XML
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for addon in ('service.nextonlibrary', 'service.translatarr'):
+              for path in Path(addon).rglob('*.py'):
+                  ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+              for path in Path(addon).rglob('*.xml'):
+                  ET.parse(path)
+          PY
