@@ -1,4 +1,4 @@
-# Brazilian Portuguese translations for overlay buttons only.
+# Brazilian Portuguese translations for overlay buttons and the shared Stinger title.
 msgid ""
 msgstr ""
 "Project-Id-Version: service.nextonlibrary\n"
@@ -16,6 +16,6 @@ msgctxt "#30017"
 msgid "Skip Intro"
 msgstr "Pular abertura"
 
-msgctxt "#30070"
+msgctxt "#30059"
 msgid "Stay Tuned"
 msgstr "Não saia ainda"

@@ -2224,7 +2224,7 @@ class NextOnLibraryService(xbmc.Monitor):
         if self.overlay_action == "skip_intro":
             return localize(30017)
         if self.overlay_action == "stinger":
-            return localize(30070)
+            return localize(30059)
         return localize(30011)
 
     def get_overlay_xml(self):

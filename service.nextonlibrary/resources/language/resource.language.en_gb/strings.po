@@ -260,8 +260,3 @@ msgstr ""
 msgctxt "#30069"
 msgid "When enabled, the Skip Intro button stays visible for the entire intro segment instead of disappearing after 20%. Useful when you want to decide later in the intro whether to skip."
 msgstr ""
-
-# Overlay-only label; the early Stinger notification uses #30059.
-msgctxt "#30070"
-msgid "Stay Tuned"
-msgstr ""
