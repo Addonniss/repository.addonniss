@@ -10,7 +10,7 @@ msgid "Enable Next On Service"
 msgstr ""
 
 msgctxt "#30002"
-msgid "Turns the background monitor on or off without disabling the add-on."
+msgid "Turns Next On prompts and autoplay on or off. Skip Intro and Stinger remain independent."
 msgstr ""
 
 msgctxt "#30003"

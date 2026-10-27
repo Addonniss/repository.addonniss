@@ -1,3 +1,7 @@
+v2.6.2
+- Added OpenAI gpt-6-luna with standard pricing of $0.10/M input and $0.50/M output tokens.
+- GPT-6 requests use reasoning effort (Minimal maps to none) without custom temperature. Existing selections and defaults are preserved.
+
 v2.6.1
 - Added OpenAI gpt-5.6-luna as a new GPT-5 model option, the cheapest GPT-5 class model for accurate high-volume translation (thanks @BorisTodorov225)
 - GPT-5.4-nano and gpt-5.6-luna now use "none" reasoning effort when the Minimal setting is selected, since those models do not support "minimal" reasoning

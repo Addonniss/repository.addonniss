@@ -6,6 +6,8 @@
 - `Next On`
 - `Stinger`
 
+The three feature toggles operate independently. Disabling Next On keeps Skip Intro and Stinger active, hides any Next Episode overlay, and cancels its autoplay countdown.
+
 ## Current Behavior
 
 The add-on can use both local chapter markers and online metadata.
