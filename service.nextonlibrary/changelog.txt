@@ -1,3 +1,6 @@
+1.1.8
+- Added Brazilian Portuguese translations for the three overlay buttons, following Kodi's interface language. Settings and early notifications remain unchanged.
+
 1.1.7
 - Migrated Skip Intro and Next On timestamp lookups to TheIntroDB API v4 before removal of the deprecated v2 endpoint.
 

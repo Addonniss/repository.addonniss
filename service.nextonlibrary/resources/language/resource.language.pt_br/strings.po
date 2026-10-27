@@ -1,0 +1,21 @@
+# Brazilian Portuguese translations for overlay buttons only.
+msgid ""
+msgstr ""
+"Project-Id-Version: service.nextonlibrary\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgctxt "#30011"
+msgid "Next"
+msgstr "Próximo"
+
+msgctxt "#30017"
+msgid "Skip Intro"
+msgstr "Pular abertura"
+
+msgctxt "#30070"
+msgid "Stay Tuned"
+msgstr "Não saia ainda"
