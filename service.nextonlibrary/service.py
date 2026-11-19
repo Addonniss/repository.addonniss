@@ -464,7 +464,7 @@ class NextOnLibraryService(xbmc.Monitor):
         # Only an explicit season/episode token in the media filename is trusted.
         # A bare number or a movie title is never sufficient.
         filename = str(playing_file or "").split("?", 1)[0].rsplit("/", 1)[-1]
-        match = re.search(r"(?i)(?:^|[. _-])s(\\d{1,2})[. _-]?e(\\d{1,3})(?=$|[. _-])", filename)
+        match = re.search(r"(?i)(?:^|[. _-])s(\d{1,2})[. _-]?e(\d{1,3})(?=$|[. _-])", filename)
         return (int(match.group(1)), int(match.group(2))) if match else None
 
     def with_external_episode_identity(self, item, playing_file):
