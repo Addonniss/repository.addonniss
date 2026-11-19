@@ -224,6 +224,7 @@ class NextOnLibraryService(xbmc.Monitor):
         self.auto_play_episode_id = None
         self.overlay_progress_frame_index = None
         self.current_movie = None
+        self.playback_identity_deadline = None
         self.stinger_result = None
         self.stinger_queried = False
         self.stinger_start_prompted = False
@@ -281,6 +282,7 @@ class NextOnLibraryService(xbmc.Monitor):
             if total_time <= 0:
                 continue
 
+            self.refresh_playback_identity()
             self.refresh_chapter_markers(total_time)
 
             if self.handle_skip_intro(current_time, total_time):
@@ -351,7 +353,9 @@ class NextOnLibraryService(xbmc.Monitor):
         self.close_overlay()
 
         self.current_file = current_file
-        self.current_item = item
+        self.current_item = self.with_external_episode_identity(item, current_file)
+        item = self.current_item
+        self.playback_identity_deadline = monotonic() + 30.0 if self.external_episode_numbers(current_file) and item.get("type") != "episode" else None
         self.current_episode = self.get_library_episode(item)
         self.current_movie = self.get_library_movie(item)
         self.skip_intro_allowed = self.is_tv_show_playback(item)
@@ -456,6 +460,51 @@ class NextOnLibraryService(xbmc.Monitor):
             return None
         return item
 
+    def external_episode_numbers(self, playing_file):
+        # Only an explicit season/episode token in the media filename is trusted.
+        # A bare number or a movie title is never sufficient.
+        filename = str(playing_file or "").split("?", 1)[0].rsplit("/", 1)[-1]
+        match = re.search(r"(?i)(?:^|[. _-])s(\d{1,2})[. _-]?e(\d{1,3})(?=$|[. _-])", filename)
+        return (int(match.group(1)), int(match.group(2))) if match else None
+
+    def with_external_episode_identity(self, item, playing_file):
+        item = dict(item)
+        numbers = self.external_episode_numbers(playing_file)
+        if not numbers:
+            return item
+        # Keep the real Kodi type and library identity intact for Next On.
+        # Only fill missing TV numbers for Skip Intro classification/lookups.
+        if (self.parse_int(item.get("season")) or 0) <= 0:
+            item["season"] = numbers[0]
+        if (self.parse_int(item.get("episode")) or 0) <= 0:
+            item["episode"] = numbers[1]
+        return item
+
+    def refresh_playback_identity(self):
+        # A late external add-on may populate Kodi's playback metadata after
+        # Player.GetItem was first captured. Reuse the existing service loop.
+        if self.playback_identity_deadline is None:
+            return
+        if monotonic() >= self.playback_identity_deadline:
+            self.playback_identity_deadline = None
+            return
+        updated = self.get_current_playback_item()
+        if not updated or not self.session_matches_current_playback():
+            return
+        updated = self.with_external_episode_identity(updated, self.current_file)
+        if updated == self.current_item:
+            return
+        self.current_item = updated
+        self.current_episode = self.get_library_episode(updated)
+        self.current_movie = self.get_library_movie(updated)
+        self.skip_intro_allowed = self.is_tv_show_playback(updated)
+        if updated.get("type") == "episode":
+            self.playback_identity_deadline = None
+        log("Playback metadata refreshed -> type=%s tv=%s season=%s episode=%s" % (
+            updated.get("type"), self.skip_intro_allowed,
+            updated.get("season"), updated.get("episode"),
+        ), xbmc.LOGDEBUG)
+
     def get_library_episode(self, item):
         if not item:
             return None
@@ -469,10 +518,12 @@ class NextOnLibraryService(xbmc.Monitor):
     def is_tv_show_playback(self, item):
         if not item:
             return False
-        if item.get("type") == "movie":
-            return False
         if item.get("type") == "episode":
             return True
+        # Kodi may label a direct HTTP episode stream as a movie before an
+        # external metadata add-on finishes its lookup.
+        if item.get("type") == "movie" and not self.external_episode_numbers(self.current_file):
+            return False
         tvshow_id = item.get("tvshowid", -1)
         if tvshow_id not in (-1, None, ""):
             return True
@@ -482,6 +533,8 @@ class NextOnLibraryService(xbmc.Monitor):
 
     def get_library_movie(self, item):
         if not item:
+            return None
+        if self.external_episode_numbers(self.current_file):
             return None
 
         # Detect movies by characteristics — same lenient pattern as is_tv_show_playback()
