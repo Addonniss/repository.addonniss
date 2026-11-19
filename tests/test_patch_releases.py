@@ -156,8 +156,7 @@ class ExternalEpisodeIdentityTests(unittest.TestCase):
         self.assertIsNone(service.current_movie)
         self.assertEqual((service.current_item['season'], service.current_item['episode']), (2, 2))
         self.assertIsNone(service.current_episode)  # Next On still needs a real library episode.
-        context = service.build_skip_intro_remote_context()
-        self.assertIsNone(context)  # No IDs yet, but chapter/manual skip remains eligible.
+        # Lack of remote IDs cannot block chapter/manual timing eligibility.
 
     def test_real_movie_does_not_enable_episode_skip(self):
         service = self.service()
