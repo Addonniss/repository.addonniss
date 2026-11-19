@@ -1,3 +1,6 @@
+1.1.10
+- Fixed S.I.N. failing to start in v1.1.9 due to a Python indentation error in the playback loop.
+
 1.1.9
 - Fixed Skip Intro not activating when Kodi initially identifies an external TV episode stream as a movie.
 - Recognize explicit SxxExx episode filenames and refresh late-arriving Kodi playback metadata during startup without repeated online lookup polling.
