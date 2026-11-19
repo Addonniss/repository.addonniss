@@ -1,3 +1,8 @@
+1.1.9
+- Fixed Skip Intro not activating when Kodi initially identifies an external TV episode stream as a movie.
+- Recognize explicit SxxExx episode filenames and refresh late-arriving Kodi playback metadata during startup without repeated online lookup polling.
+- Keep Next On restricted to Kodi library episodes and preserve existing chapter/manual intro fallbacks.
+
 1.1.8
 - Added Brazilian Portuguese translations for the three overlay buttons, following Kodi's interface language. The early Stinger notification shares the translated title. Settings and notification message bodies remain unchanged.
 
